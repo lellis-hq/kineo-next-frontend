@@ -5,14 +5,18 @@ import type {
 } from "@/lib/applications";
 import { cn } from "@/lib/cn";
 
-/** A reached step's dot, per tone. */
+/**
+ * The track keeps the same three accents as the status label: the journey's
+ * cream, a sage outcome and a rust one. Every other tone reads muted, so the
+ * two cells of one row no longer disagree.
+ */
 const DONE_DOT: Record<ProgressTone, string> = {
   journey: "bg-primary",
   neutral: "bg-muted",
   success: "bg-success",
   danger: "bg-danger",
-  warning: "bg-warning",
-  info: "bg-info",
+  warning: "bg-muted",
+  info: "bg-muted",
 };
 
 /** The ring around the step the application is waiting on. */
@@ -21,8 +25,8 @@ const CURRENT_RING: Record<ProgressTone, string> = {
   neutral: "border-muted ring-muted/20",
   success: "border-success ring-success/20",
   danger: "border-danger ring-danger/20",
-  warning: "border-warning ring-warning/20",
-  info: "border-info ring-info/20",
+  warning: "border-muted ring-muted/20",
+  info: "border-muted ring-muted/20",
 };
 
 const DONE_LABEL: Record<ProgressTone, string> = {
@@ -30,8 +34,8 @@ const DONE_LABEL: Record<ProgressTone, string> = {
   neutral: "text-muted",
   success: "text-success",
   danger: "text-danger",
-  warning: "text-warning",
-  info: "text-info",
+  warning: "text-muted",
+  info: "text-muted",
 };
 
 const STATE_WORDS: Record<ProgressStepState, string> = {

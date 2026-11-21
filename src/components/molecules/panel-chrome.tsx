@@ -51,7 +51,7 @@ export function StatChip({
 
   const classes = cn(
     "flex min-w-0 items-center gap-2 rounded-control px-3 py-2.5 text-left",
-    pressed ? "bg-primary/15 ring-1 ring-primary/40" : "bg-white/[0.04]",
+    pressed ? "bg-primary/15 ring-1 ring-primary/40" : "bg-tint",
     onClick &&
       "cursor-pointer transition-colors hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
   );

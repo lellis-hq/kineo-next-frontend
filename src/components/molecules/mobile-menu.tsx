@@ -84,7 +84,7 @@ export function MobileMenu({
         tabIndex={-1}
         inert={!open}
         className={cn(
-          "absolute top-[calc(100%+0.5rem)] right-0 z-50 max-h-[70dvh] w-56 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-card border border-border bg-surface p-2 shadow-2xl shadow-black/50 outline-none transition-all duration-200 ease-out",
+          "absolute top-[calc(100%+0.5rem)] right-0 z-50 max-h-[70dvh] w-56 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-card border border-border bg-surface p-2 shadow-[var(--shadow-pop)] outline-none transition-all duration-200 ease-out",
           open
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
             : "pointer-events-none -translate-y-2 scale-[0.98] opacity-0",

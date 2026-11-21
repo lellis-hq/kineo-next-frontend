@@ -4,7 +4,7 @@ import type { BadgeTone } from "@/lib/ui-tokens";
 
 export type BadgeSize = "sm" | "md" | "lg";
 
-/** Tones map to the `.badge-*` classes of `globals.css`. */
+/** Tones map to the `.badge-*` classes of `globals.css`: only danger and success tint the label. */
 const TONE_CLASSES: Record<BadgeTone, string> = {
   neutral: "badge",
   success: "badge badge-success",
@@ -14,9 +14,9 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
 };
 
 const SIZE_CLASSES: Record<BadgeSize, string> = {
-  sm: "",
-  md: "px-2.5 py-1",
-  lg: "px-3.5 py-1.5",
+  sm: "badge-sm",
+  md: "badge-md",
+  lg: "badge-lg",
 };
 
 export function Badge({
@@ -27,9 +27,9 @@ export function Badge({
   children,
 }: {
   tone?: BadgeTone;
-  /** Same `sm` as before; `md` and `lg` are wider and squarer. */
+  /** `sm` is the original tag, `md` the card's, `lg` a panel figure. */
   size?: BadgeSize;
-  /** `plain` drops the box and keeps the dot and the label (table status column). */
+  /** `plain` drops the box and keeps the label (table status, dense rows). */
   variant?: "boxed" | "plain";
   className?: string;
   children: ReactNode;

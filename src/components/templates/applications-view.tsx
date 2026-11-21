@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { SearchIcon } from "@/components/atoms/icons";
 import { EmptyState } from "@/components/molecules/empty-state";
 import { FilterChips } from "@/components/molecules/filter-chips";
 import { Pagination } from "@/components/molecules/pagination";
@@ -37,9 +35,8 @@ interface ApplicationsViewProps {
 }
 
 /**
- * /applications: one console panel holding the table — the status filters
- * in its header, the journey of each application in its rows, the pager at
- * its foot.
+ * /applications: the filter bar owns "what am I looking at", the panel owns
+ * "what did I find". One status per row, no second slicing of the same list.
  */
 export function ApplicationsView({
   data,
@@ -57,35 +54,44 @@ export function ApplicationsView({
 
   return (
     <div className={`${SITE_SHELL} py-4 lg:py-6`}>
+      {hasAny && (
+        <div className="mb-4 flex flex-col gap-3">
+          <FilterChips
+            ariaLabel="Filtrer les candidatures par statut"
+            options={APPLICATION_FILTERS.map((option) => ({
+              ...option,
+              count: countForBucket(option, data),
+            }))}
+            value={currentFilter}
+            onChange={onFilterChange}
+          />
+
+          {/* Only under « Refusées », and only when some situation is non-empty. */}
+          {currentFilter === "REFUSED" && hasSituation(data) && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="text-xs font-medium text-muted">
+                Précisez le motif
+              </span>
+              <FilterChips
+                ariaLabel="Filtrer les candidatures refusées par situation"
+                options={REJECTION_SITUATIONS.map((option) => ({
+                  ...option,
+                  count: countForSituation(option.id, data),
+                }))}
+                value={currentSituation}
+                onChange={onSituationChange}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       <Panel
         title={
           <>
             Mes candidatures{" "}
             <span className="text-muted tabular-nums">{data.counts.total}</span>
           </>
-        }
-        action={
-          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
-            {hasAny && (
-              <FilterChips
-                ariaLabel="Filtrer les candidatures par statut"
-                options={APPLICATION_FILTERS.map((option) => ({
-                  ...option,
-                  count: countForBucket(option, data),
-                }))}
-                value={currentFilter}
-                onChange={onFilterChange}
-              />
-            )}
-            <Link
-              href="/listings"
-              aria-label="Parcourir les annonces"
-              title="Parcourir les annonces"
-              className="grid size-10 shrink-0 place-items-center rounded-full border border-border-strong text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
-            >
-              <SearchIcon className="size-4" />
-            </Link>
-          </div>
         }
       >
         {!hasAny ? (
@@ -98,34 +104,19 @@ export function ApplicationsView({
           />
         ) : (
           <>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-muted">
-                {awaiting > 0 ? (
-                  <>
-                    <span className="text-foreground tabular-nums">
-                      {awaiting}
-                    </span>{" "}
-                    attend{awaiting > 1 ? "ent" : ""} encore une réponse
-                    d&apos;un cabinet.
-                  </>
-                ) : (
-                  "Aucune candidature n'attend de réponse."
-                )}
-              </p>
-
-              {/* Only under « Refusées », and only when some situation is non-empty. */}
-              {currentFilter === "REFUSED" && hasSituation(data) && (
-                <FilterChips
-                  ariaLabel="Filtrer les candidatures refusées par situation"
-                  options={REJECTION_SITUATIONS.map((option) => ({
-                    ...option,
-                    count: countForSituation(option.id, data),
-                  }))}
-                  value={currentSituation}
-                  onChange={onSituationChange}
-                />
+            <p className="mb-4 text-sm text-muted">
+              {awaiting > 0 ? (
+                <>
+                  <span className="text-foreground tabular-nums">
+                    {awaiting}
+                  </span>{" "}
+                  attend{awaiting > 1 ? "ent" : ""} encore une réponse d&apos;un
+                  cabinet.
+                </>
+              ) : (
+                "Aucune candidature n'attend de réponse."
               )}
-            </div>
+            </p>
 
             {data.applications.length === 0 ? (
               <EmptyState
@@ -135,10 +126,7 @@ export function ApplicationsView({
               />
             ) : (
               <>
-                <ApplicationsTable
-                  applications={data.applications}
-                  grouped={currentFilter === "ALL"}
-                />
+                <ApplicationsTable applications={data.applications} />
                 <ApplicationsMobileList applications={data.applications} />
               </>
             )}
