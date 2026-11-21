@@ -7,7 +7,7 @@
 /** The semantic tones, each mapped to a CSS color token (`--color-success`, …). */
 export type Tone = "neutral" | "success" | "warning" | "danger" | "info";
 
-/** Status chip: a neutral label whose dot takes the tone (`.badge-*` in `globals.css`). */
+/** Status label: a small tag or plain text; danger and success tint the label (`.badge-*` in `globals.css`). */
 export type BadgeTone = Tone;
 
 /** Every tone but `neutral`: a neutral alert would say nothing. */
