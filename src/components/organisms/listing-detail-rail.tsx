@@ -131,7 +131,7 @@ export function ListingDetailRail({
         </dl>
 
         {listing.description && (
-          <div className="mt-4 rounded-control bg-white/[0.04] px-4 py-3">
+          <div className="mt-4 rounded-control bg-tint px-4 py-3">
             <p className="text-2xs text-muted">Description</p>
             <p className="mt-1 text-sm leading-relaxed whitespace-pre-line text-foreground/85">
               {listing.description}

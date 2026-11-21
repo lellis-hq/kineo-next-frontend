@@ -72,7 +72,7 @@ export function DashboardRail({
           Taux de réponse des cabinets
         </p>
         {reactivity.unseen > 0 && (
-          <p className="mt-4 rounded-control bg-white/[0.04] px-3 py-2.5 text-xs text-muted">
+          <p className="mt-4 rounded-control bg-tint px-3 py-2.5 text-xs text-muted">
             <span className="text-foreground tabular-nums">
               {reactivity.unseen}
             </span>{" "}

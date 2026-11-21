@@ -25,7 +25,7 @@ export function AuthCard({
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 py-8 text-foreground sm:px-6 sm:py-10">
       {/* `my-auto`: centred, yet scrollable when taller than the viewport. */}
-      <div className="my-auto w-full max-w-110 rounded-card border border-border bg-surface px-5 py-7 shadow-2xl shadow-black/50 sm:px-9 sm:py-10">
+      <div className="my-auto w-full max-w-110 rounded-card border border-border bg-surface px-5 py-7 shadow-[var(--shadow-pop)] sm:px-9 sm:py-10">
         <div className="mb-8 flex flex-col items-center gap-6 text-center sm:mb-9 sm:gap-8">
           <KineoLogo />
 

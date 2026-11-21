@@ -18,6 +18,8 @@
   --surface-2: #282624;
   --surface-3: #312f2c;
   --surface-hover: #292725;
+  /* The shared translucent fill for small overlays and tags. */
+  --tint: rgb(255 255 255 / 4%);
 
   --foreground: #ffffff;
   --muted: #a6a29a;
@@ -74,6 +76,7 @@
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
   --color-surface-hover: var(--surface-hover);
+  --color-tint: var(--tint);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
@@ -271,7 +274,7 @@
     line-height: 1.2;
     white-space: nowrap;
     color: var(--badge-ink, var(--foreground));
-    background: rgb(255 255 255 / 4%);
+    background: var(--tint);
     border: 1px solid var(--border);
   }
 
@@ -466,33 +469,6 @@
   .hero-enter {
     animation: kineo-fade-up 560ms cubic-bezier(0.22, 0.68, 0.28, 1) both;
     animation-delay: var(--hero-delay);
-  }
-
-  .btn-shine {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .btn-shine::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 45%;
-    background: linear-gradient(
-      100deg,
-      transparent,
-      rgb(255 255 255 / 26%),
-      transparent
-    );
-    transform: translateX(-140%);
-    transition: transform 600ms cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
-  }
-
-  .btn-shine:hover::before {
-    transform: translateX(290%);
   }
 
   .card-lift {

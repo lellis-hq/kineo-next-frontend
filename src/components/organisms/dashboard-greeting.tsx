@@ -21,10 +21,6 @@ export function DashboardGreeting({
     <Card className="relative overflow-hidden px-5 py-6 shadow-[var(--shadow-card)] sm:px-8 sm:py-8">
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute -top-24 -right-16 size-80 rounded-full bg-primary/[0.08] blur-3xl"
-      />
-      <span
-        aria-hidden="true"
         className="tick-track pointer-events-none absolute inset-x-0 bottom-0 h-6 text-primary/[0.06]"
       />
 
@@ -54,11 +50,7 @@ export function DashboardGreeting({
                 key={action.label}
                 href={action.href}
                 variant={action.variant ?? "outline"}
-                className={
-                  action.variant === "primary"
-                    ? "btn-shine w-full sm:w-auto"
-                    : "w-full sm:w-auto"
-                }
+                className="w-full sm:w-auto"
               >
                 {Icon && <Icon className="size-4" />}
                 {action.label}

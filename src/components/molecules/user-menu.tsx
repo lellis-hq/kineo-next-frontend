@@ -73,7 +73,7 @@ export function UserMenu({
             role="menuitem"
             href="/profile"
             onClick={() => setOpen(false)}
-            className="mt-1 flex items-center rounded-control px-3 py-2 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:bg-surface-hover focus-visible:outline-none"
+            className="mt-1 flex items-center rounded-control px-3 py-2 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:bg-surface-hover"
           >
             Mon profil
           </Link>
@@ -86,7 +86,7 @@ export function UserMenu({
                 setOpen(false);
                 onSignOut();
               }}
-              className="flex w-full cursor-pointer items-center gap-2 rounded-control px-3 py-2 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:bg-surface-hover focus-visible:outline-none"
+              className="flex w-full cursor-pointer items-center gap-2 rounded-control px-3 py-2 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:bg-surface-hover"
             >
               <LogOutIcon className="size-4" />
               Se déconnecter

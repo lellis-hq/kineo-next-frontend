@@ -61,7 +61,7 @@ export function MarketingHero() {
             <Button
               href={hero.primaryCta.href}
               size="lg"
-              className="btn-shine w-full sm:w-auto"
+              className="w-full sm:w-auto"
             >
               {hero.primaryCta.label}
               <ArrowRightIcon className="size-4" />

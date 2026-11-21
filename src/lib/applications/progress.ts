@@ -20,8 +20,9 @@ import type { ApplicationEntry } from "./contracts";
 export type ProgressStepState = "done" | "current" | "pending" | "skipped";
 
 /**
- * A step's colour: `journey` is the cream of the way so far; the tones are
- * the outcome's (`neutral` greys out a withdrawal).
+ * A step's colour: `journey` is the cream of the way so far. Only the two
+ * outcomes (success, danger) keep an accent; the other tones read muted, as
+ * the status label beside the track does.
  */
 export type ProgressTone = "journey" | Tone;
 

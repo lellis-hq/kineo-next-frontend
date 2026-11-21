@@ -21,10 +21,7 @@ export function Select({ label, hint, className, id, ...rest }: SelectProps) {
         <select
           id={id}
           aria-label={typeof label === "string" ? label : undefined}
-          className={cn(
-            "field-input appearance-none pr-10 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0",
-            className,
-          )}
+          className={cn("field-input appearance-none pr-10", className)}
           {...rest}
         />
         <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted">
