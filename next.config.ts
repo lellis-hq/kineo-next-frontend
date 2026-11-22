@@ -45,6 +45,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   poweredByHeader: false,
   cacheComponents: true,
+  partialPrefetching: true,
   // Dev-only extra hosts allowed to open the dev server (e.g. a phone on the LAN).
   allowedDevOrigins: (process.env.ALLOWED_DEV_ORIGINS ?? "")
     .split(",")

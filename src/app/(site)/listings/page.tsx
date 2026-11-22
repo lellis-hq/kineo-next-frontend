@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { BrowseSkeleton } from "@/components/molecules/list-skeleton";
@@ -8,13 +9,16 @@ import {
   browsePageClamp,
   browseViewFromParams,
   browseViewToParams,
-  fetchBrowseListings,
   fetchBrowsePlaces,
-  fetchFacets,
   toBrowseView,
 } from "@/lib/listings";
+import {
+  getCachedBrowseFacets,
+  getCachedBrowseFeed,
+} from "@/lib/listings/browse-cache.server";
 import { fetchMyProfile } from "@/lib/profile-service";
 import { requireMember } from "@/lib/require-member";
+import { fetchKnownServerAuth } from "@/lib/server-auth";
 
 export const metadata: Metadata = {
   title: "Annonces — Kineo",
@@ -57,10 +61,24 @@ async function Listings({
   const { filters, page, sort } = browseViewFromParams(params);
   const view = toBrowseView(filters, page, sort);
 
+  // A cache hit never reaches the backend, so the member check can no longer
+  // rely on a 401 from the feed. The layout already read the session this
+  // request; fetchServerAuth is request-memoised, so this adds no backend call.
+  const auth = await fetchKnownServerAuth();
+  if (auth.status === "anonymous") redirect("/signin");
+  const cookie = (await headers()).get("cookie") ?? "";
+
   const [data, facets, home] = await requireMember(
     Promise.all([
-      fetchBrowseListings(view, serverTransport),
-      fetchFacets(view, serverTransport),
+      getCachedBrowseFeed(cookie, view),
+      getCachedBrowseFacets(
+        cookie,
+        view.city,
+        view.q,
+        view.startDateFrom,
+        view.startDateTo,
+        view.urgentOnly,
+      ),
       // Where the map opens: the profile's city. Never fatal — the map then
       // reads the browser's time zone, and failing that shows France.
       fetchMyProfile(serverTransport).then(

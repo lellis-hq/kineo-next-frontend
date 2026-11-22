@@ -10,6 +10,7 @@ import {
   fetchBrowseListing,
   fetchBrowseListings,
   fetchBrowsePlaces,
+  fetchFacets,
   fetchListingPageOf,
 } from "./browse-service";
 import {
@@ -536,6 +537,35 @@ describe("fetchBrowsePlaces", () => {
 
     expect(data).not.toBeNull();
     expect(data?.places).toEqual([]);
+  });
+});
+
+describe("fetchFacets", () => {
+  /**
+   * The counts cover the whole matching collection, not one page, and the
+   * specialty panel shows what else is on offer. Keeping those three fields
+   * out of the URL is what lets a facet answer be cached across them.
+   */
+  it("ignores the specialty, the page and the ordering", async () => {
+    const paths: string[] = [];
+    const transport: ApiTransport = async (path) => {
+      paths.push(path);
+      return Response.json({
+        total: 1,
+        urgent: 0,
+        bySpecialty: {},
+        byStartWeek: [],
+      });
+    };
+    const view = {
+      ...toBrowseView(EMPTY_BROWSE_FILTERS, 3, "urgent"),
+      city: "Lyon",
+      specialty: "DENTIST" as const,
+    };
+
+    await fetchFacets(view, transport);
+
+    expect(paths[0]).toBe("/replacement-listings/facets?city=Lyon");
   });
 });
 
