@@ -92,13 +92,29 @@ export async function fetchBrowseListing(
 }
 
 /**
+ * Only the fields that change which practices the map draws. Ordering and page
+ * are left out by type as well as by query: the map reads the whole matching
+ * collection and the backend gives its previews a fixed order.
+ */
+type BrowsePlaceFilters = Pick<
+  BrowseFilters,
+  "specialty" | "city" | "q" | "startDateFrom" | "startDateTo" | "urgentOnly"
+>;
+
+/**
  * GET /replacement-listings/places — one entry per practice, unpaginated.
  *
  * `null` on failure, never an empty set: the caller keeps the pins it has
  * rather than showing a failed refresh as "no results".
+ *
+ * Neither `sort` nor `page` travels. The endpoint draws the whole matching
+ * collection and orders each practice's previews itself (`startDate asc, id
+ * desc`), so sending either would only vary the URL — and make a reorder or a
+ * page turn look like a new filter to anything keyed on it — without changing
+ * the answer.
  */
 export async function fetchBrowsePlaces(
-  filters: BrowseFilters = {},
+  filters: BrowsePlaceFilters = {},
   transport?: ApiTransport,
   init?: RequestInit,
 ): Promise<BrowsePlacesData | null> {
@@ -109,7 +125,6 @@ export async function fetchBrowsePlaces(
     startDateFrom: filters.startDateFrom,
     startDateTo: filters.startDateTo,
     urgent: filters.urgentOnly ? "true" : undefined,
-    sort: filters.sort,
   });
 
   try {

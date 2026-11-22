@@ -484,12 +484,19 @@ describe("fetchBrowsePlaces", () => {
     expect(paths[0]).toContain("startDateFrom=2026-10-01");
   });
 
-  it("carries the ordering, so the preview follows the list", async () => {
+  /**
+   * The backend orders each practice's previews by date, not by the feed's
+   * sort, and the map covers the whole collection. Keeping both out of the URL
+   * means a reorder or a page turn reuses the same cached answer instead of
+   * looking like a new filter.
+   */
+  it("ignores the ordering and the page, which the map does not use", async () => {
     const { paths, transport } = recorder();
+    const view = toBrowseView(EMPTY_BROWSE_FILTERS, 2, "urgent");
 
-    await fetchBrowsePlaces({ sort: "urgent" }, transport);
+    await fetchBrowsePlaces(view, transport);
 
-    expect(paths[0]).toContain("sort=urgent");
+    expect(paths[0]).toBe("/replacement-listings/places");
   });
 
   it("keeps the population in `count` while previewing few", async () => {
