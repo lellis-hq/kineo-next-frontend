@@ -3,7 +3,6 @@
 import { Chip } from "@/components/atoms/chip";
 import {
   AlertTriangleIcon,
-  CrosshairIcon,
   ListIcon,
   MapIcon,
   SearchIcon,
@@ -12,13 +11,14 @@ import {
 import { SelectPill } from "@/components/atoms/select-pill";
 import type { SpecialtyOption } from "@/components/molecules/browse-filter-fields";
 import { IconField } from "@/components/molecules/icon-field";
+import { LocateChip } from "@/components/molecules/locate-chip";
 import { PlaceAutocomplete } from "@/components/molecules/place-autocomplete";
 import { SegmentedControl } from "@/components/molecules/segmented-control";
 import { ListingsFilterPopover } from "@/components/organisms/listings-filter-popover";
 import { cn } from "@/lib/cn";
 import { plural } from "@/lib/format";
-import type { SelectedPlace } from "@/lib/geo/types";
-import { useDebouncedInput } from "@/lib/hooks/use-committed-input";
+import { useDebouncedInput } from "@/lib/hooks/use-debounced-input";
+import { useLocationFilters } from "@/lib/hooks/use-location-filters";
 import { MAP_PILL } from "@/lib/layout";
 import type {
   BrowseFormFilters,
@@ -82,31 +82,7 @@ export function ListingsToolbar({
 }: ListingsToolbarProps) {
   const overlay = onMap ? "overlay" : "plain";
 
-  /**
-   * A picked suggestion carries stable codes; free text keeps the legacy
-   * substring filter and clears any code left by a previous pick.
-   */
-  const commitCity = (place: SelectedPlace | null, text: string) => {
-    if (place) {
-      onFiltersChange({
-        city: place.label,
-        cityCode: place.cityCodeInsee ?? "",
-        department: place.departmentCode,
-        lat: place.latitude !== undefined ? String(place.latitude) : "",
-        lng: place.longitude !== undefined ? String(place.longitude) : "",
-        radiusKm: "",
-      });
-      return;
-    }
-    onFiltersChange({
-      city: text,
-      cityCode: "",
-      department: "",
-      lat: "",
-      lng: "",
-      radiusKm: "",
-    });
-  };
+  const { commitCity, locate } = useLocationFilters(filters, onFiltersChange);
 
   // Debounced rather than committed on blur: a search should answer as the
   // reader finishes a word.
@@ -137,30 +113,7 @@ export function ListingsToolbar({
       />
 
       {/* No map in « Liste seule », so this chip cannot cover map controls. */}
-      {!onMap && (
-        <Chip
-          size="md"
-          aria-label="Rechercher autour de moi"
-          className="shrink-0 whitespace-nowrap"
-          onClick={() =>
-            navigator.geolocation?.getCurrentPosition(
-              (position) =>
-                onFiltersChange({
-                  city: "",
-                  cityCode: "",
-                  department: "",
-                  lat: String(position.coords.latitude),
-                  lng: String(position.coords.longitude),
-                  radiusKm: filters.radiusKm || "10",
-                }),
-              () => undefined,
-            )
-          }
-        >
-          <CrosshairIcon className="mr-1 inline-block size-3.5 align-[-0.15em]" />
-          Autour de moi
-        </Chip>
-      )}
+      {!onMap && <LocateChip onLocate={locate} />}
 
       <SelectPill
         id="browse-sort"

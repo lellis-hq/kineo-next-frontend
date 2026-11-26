@@ -1,7 +1,7 @@
 import { EmptyState } from "@/components/molecules/empty-state";
-import { FilterChips } from "@/components/molecules/filter-chips";
 import { Pagination } from "@/components/molecules/pagination";
 import { Panel } from "@/components/molecules/panel";
+import { SegmentedControl } from "@/components/molecules/segmented-control";
 import {
   ApplicationsMobileList,
   ApplicationsTable,
@@ -56,7 +56,8 @@ export function ApplicationsView({
     <div className={`${SITE_SHELL} py-4 lg:py-6`}>
       {hasAny && (
         <div className="mb-4 flex flex-col gap-3">
-          <FilterChips
+          <SegmentedControl
+            className="w-fit"
             ariaLabel="Filtrer les candidatures par statut"
             options={APPLICATION_FILTERS.map((option) => ({
               ...option,
@@ -72,7 +73,8 @@ export function ApplicationsView({
               <span className="text-xs font-medium text-muted">
                 Précisez le motif
               </span>
-              <FilterChips
+              <SegmentedControl
+                className="w-fit"
                 ariaLabel="Filtrer les candidatures refusées par situation"
                 options={REJECTION_SITUATIONS.map((option) => ({
                   ...option,

@@ -23,8 +23,8 @@ interface SegmentedControlProps<T extends string> {
 
 /**
  * A few mutually exclusive options inside one track; scrolls horizontally on
- * overflow rather than wrapping. For many free-standing options, see
- * `FilterChips`.
+ * overflow rather than wrapping. Use one per filter family, with the list of
+ * options supplied by the caller.
  */
 export function SegmentedControl<T extends string>({
   options,

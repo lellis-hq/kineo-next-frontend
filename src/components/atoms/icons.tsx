@@ -165,7 +165,7 @@ export function SearchIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-/** Sliders — "narrow these results". Pairs with `FilterChips`. */
+/** Sliders — "narrow these results". Pairs with the filters popover. */
 export function SlidersIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Svg {...props}>
