@@ -9,6 +9,7 @@ import { useBrowseResource } from "@/lib/hooks/use-browse-resource";
 import { useBrowseView } from "@/lib/hooks/use-browse-view";
 import type { ListingsMapHandle } from "@/lib/hooks/use-map-markers";
 import {
+  BROWSE_PAGE_SIZE,
   type BrowseFacets,
   type BrowseFormFilters,
   type BrowseHorizon,
@@ -136,6 +137,10 @@ export function ListingsContainer({
         totalPages: resource.data.totalPages,
         page: resource.data.page,
         onPageChange,
+        pageSize: browse.view.limit ?? BROWSE_PAGE_SIZE,
+        onPageSizeChange: (size) => onFiltersChange({ limit: String(size) }),
+        filters: browse.filters,
+        onFiltersChange,
         // No client fetch here: the pending signal is the server navigation.
         loading: resource.loading || browse.isNavigating,
         filtered: browse.filtered,

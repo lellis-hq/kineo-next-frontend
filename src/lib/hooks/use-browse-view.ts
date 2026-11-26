@@ -17,6 +17,7 @@ import {
   EMPTY_BROWSE_FILTERS,
   horizonForBounds,
   isDefaultBrowseView,
+  readLayout,
   toBrowseView,
 } from "@/lib/listings";
 import { SPECIALTY_LABELS } from "@/lib/profile";
@@ -39,7 +40,11 @@ export function useBrowseView() {
     [paramsKey],
   );
 
-  const [layout, setLayout] = useState<BrowseLayout>("split");
+  // The layout lives in the URL so a shared link opens the same split/map/list
+  // view. Local state keeps the switch responsive during the transition.
+  const [layout, setLayoutState] = useState<BrowseLayout>(() =>
+    readLayout(new URLSearchParams(paramsKey).get("view")),
+  );
   const [pendingWrite, setPendingWrite] = useState<"filters" | "page" | null>(
     null,
   );
@@ -47,6 +52,12 @@ export function useBrowseView() {
   useEffect(() => {
     if (!isNavigating) setPendingWrite(null);
   }, [isNavigating]);
+
+  useEffect(() => {
+    if (!isNavigating) {
+      setLayoutState(readLayout(new URLSearchParams(paramsKey).get("view")));
+    }
+  }, [paramsKey, isNavigating]);
 
   const view = useMemo(
     () => toBrowseView(filters, page, sort),
@@ -60,11 +71,21 @@ export function useBrowseView() {
    */
   const writeView = useCallback(
     (
-      next: { filters: BrowseFormFilters; page: number; sort: BrowseSort },
+      next: {
+        filters: BrowseFormFilters;
+        page: number;
+        sort: BrowseSort;
+        layout: BrowseLayout;
+      },
       method: "replace" | "push",
       kind: "filters" | "page",
     ) => {
-      const query = browseViewToParams(next.filters, next.page, next.sort);
+      const query = browseViewToParams(
+        next.filters,
+        next.page,
+        next.sort,
+        next.layout,
+      );
       const search = query.toString();
       const url = search ? `${pathname}?${search}` : pathname;
       setPendingWrite(kind);
@@ -76,39 +97,50 @@ export function useBrowseView() {
     [pathname, router],
   );
 
+  /** A visual reflow: optimistic locally, but still shared through the URL. */
+  const setLayout = useCallback(
+    (next: BrowseLayout) => {
+      setLayoutState(next);
+      const query = browseViewToParams(filters, page, sort, next).toString();
+      const url = query ? `${pathname}?${query}` : pathname;
+      startTransition(() => router.replace(url));
+    },
+    [filters, page, sort, pathname, router],
+  );
+
   /** A filter change returns to the first page, in the same URL write. */
   const applyFilters = useCallback(
     (patch: Partial<BrowseFormFilters>) => {
       writeView(
-        { filters: { ...filters, ...patch }, page: 1, sort },
+        { filters: { ...filters, ...patch }, page: 1, sort, layout },
         "replace",
         "filters",
       );
     },
-    [filters, sort, writeView],
+    [filters, sort, layout, writeView],
   );
 
   const applySort = useCallback(
     (next: BrowseSort) => {
-      writeView({ filters, page: 1, sort: next }, "replace", "filters");
+      writeView({ filters, page: 1, sort: next, layout }, "replace", "filters");
     },
-    [filters, writeView],
+    [filters, layout, writeView],
   );
 
   const resetFilters = useCallback(() => {
     writeView(
-      { filters: EMPTY_BROWSE_FILTERS, page: 1, sort },
+      { filters: EMPTY_BROWSE_FILTERS, page: 1, sort, layout },
       "replace",
       "filters",
     );
-  }, [sort, writeView]);
+  }, [sort, layout, writeView]);
 
   /** A `push`, so the back button walks the pages. */
   const changePage = useCallback(
     (next: number) => {
-      writeView({ filters, page: next, sort }, "push", "page");
+      writeView({ filters, page: next, sort, layout }, "push", "page");
     },
-    [filters, sort, writeView],
+    [filters, sort, layout, writeView],
   );
 
   // Derived from the date fields rather than stored, so the two can't disagree.

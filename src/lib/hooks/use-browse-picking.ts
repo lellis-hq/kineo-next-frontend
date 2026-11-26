@@ -22,7 +22,12 @@ import {
 } from "@/lib/listings";
 
 type WriteView = (
-  next: { filters: BrowseFormFilters; page: number; sort: BrowseSort },
+  next: {
+    filters: BrowseFormFilters;
+    page: number;
+    sort: BrowseSort;
+    layout: BrowseLayout;
+  },
   method: "replace" | "push",
   kind: "filters" | "page",
 ) => void;
@@ -97,7 +102,11 @@ export function useBrowsePicking({
             clearScroll();
             return result;
           }
-          writeView({ filters, page: result.page, sort }, "replace", "page");
+          writeView(
+            { filters, page: result.page, sort, layout },
+            "replace",
+            "page",
+          );
           return result;
         })
         .catch((): ListingPageOfResult => {
@@ -105,7 +114,7 @@ export function useBrowsePicking({
           return { status: "unavailable" };
         });
     },
-    [view, filters, sort, writeView, scrollTo, clearScroll],
+    [view, filters, sort, layout, writeView, scrollTo, clearScroll],
   );
 
   const landing = usePickLanding({

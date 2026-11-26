@@ -62,7 +62,7 @@ export function PlaceAutocomplete({
     const communes = suggestions.communes.map((commune) => ({
       id: `${listId}-c-${normalizeSearchText(commune.nom)}`,
       label: commune.nom,
-      detail: "Commune",
+      detail: "",
       place: {
         kind: "commune" as const,
         label: commune.nom,
@@ -296,7 +296,9 @@ function OptionRow({
       )}
     >
       <span className="truncate">{option.label}</span>
-      <span className="shrink-0 text-xs text-muted">{option.detail}</span>
+      {option.detail && (
+        <span className="shrink-0 text-xs text-muted">{option.detail}</span>
+      )}
     </button>
   );
 }

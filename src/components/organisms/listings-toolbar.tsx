@@ -3,6 +3,7 @@
 import { Chip } from "@/components/atoms/chip";
 import {
   AlertTriangleIcon,
+  CrosshairIcon,
   ListIcon,
   MapIcon,
   SearchIcon,
@@ -134,6 +135,32 @@ export function ListingsToolbar({
         onCommit={commitCity}
         overlay={onMap}
       />
+
+      {/* No map in « Liste seule », so this chip cannot cover map controls. */}
+      {!onMap && (
+        <Chip
+          size="md"
+          aria-label="Rechercher autour de moi"
+          className="shrink-0 whitespace-nowrap"
+          onClick={() =>
+            navigator.geolocation?.getCurrentPosition(
+              (position) =>
+                onFiltersChange({
+                  city: "",
+                  cityCode: "",
+                  department: "",
+                  lat: String(position.coords.latitude),
+                  lng: String(position.coords.longitude),
+                  radiusKm: filters.radiusKm || "10",
+                }),
+              () => undefined,
+            )
+          }
+        >
+          <CrosshairIcon className="mr-1 inline-block size-3.5 align-[-0.15em]" />
+          Autour de moi
+        </Chip>
+      )}
 
       <SelectPill
         id="browse-sort"

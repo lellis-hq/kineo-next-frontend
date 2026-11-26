@@ -1,4 +1,5 @@
 import type { Ref } from "react";
+import { ActiveFilterChips } from "@/components/molecules/active-filter-chips";
 import { EmptyState } from "@/components/molecules/empty-state";
 import { Pagination } from "@/components/molecules/pagination";
 import { Panel } from "@/components/molecules/panel";
@@ -7,11 +8,13 @@ import { ListingCard } from "@/components/organisms/listing-card";
 import { ListingsTable } from "@/components/organisms/listings-table";
 import { cn } from "@/lib/cn";
 import type {
+  BrowseFormFilters,
   BrowseHorizon,
   BrowseListing,
   ListingSpotlight,
   ListingsTableHandle,
 } from "@/lib/listings";
+import type { PageSize } from "@/lib/page-size";
 
 interface BrowseHorizonOption {
   id: BrowseHorizon;
@@ -44,6 +47,10 @@ interface ListingsResultsPanelProps {
   totalPages: number;
   page: number;
   onPageChange: (page: number) => void;
+  pageSize?: number;
+  onPageSizeChange?: (size: number) => void;
+  filters: BrowseFormFilters;
+  onFiltersChange: (patch: Partial<BrowseFormFilters>) => void;
   loading: boolean;
   filtered: boolean;
   horizon: BrowseHorizon;
@@ -70,6 +77,10 @@ export function ListingsResultsPanel({
   totalPages,
   page,
   onPageChange,
+  pageSize,
+  onPageSizeChange,
+  filters,
+  onFiltersChange,
   loading,
   filtered,
   horizon,
@@ -118,11 +129,21 @@ export function ListingsResultsPanel({
         </div>
       }
     >
+      <ActiveFilterChips
+        filters={filters}
+        onFiltersChange={onFiltersChange}
+        onResetFilters={onResetFilters}
+      />
+
       {/*
         A size container: cards or table is decided by this panel's width, not
         the screen's. `data-results` scopes the table's `scrollToId`.
       */}
-      <div data-results className={cn("@container flex flex-col", RESULTS_BOX)}>
+      <div
+        data-results
+        aria-busy={loading}
+        className={cn("@container flex flex-col", RESULTS_BOX)}
+      >
         {/* Kept mounted, so a pick landing on an empty page is announced. */}
         <output className="sr-only" aria-live="polite" aria-atomic="true">
           {announcement}
@@ -187,6 +208,8 @@ export function ListingsResultsPanel({
         currentPage={page}
         totalPages={totalPages}
         onPageChange={onPageChange}
+        pageSize={pageSize as PageSize | undefined}
+        onPageSizeChange={onPageSizeChange}
         loading={loading}
         highlight={pageHighlight}
         className="mt-3 lg:mt-4"

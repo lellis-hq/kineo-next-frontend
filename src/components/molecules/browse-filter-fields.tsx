@@ -87,7 +87,7 @@ export function BrowseFilterFields({
             }
           >
             <CrosshairIcon className="mr-1 inline-block size-3.5 align-[-0.15em]" />
-            Autour de moi
+            Me géolocaliser
           </Chip>
           <Select
             id="browse-radius"
@@ -106,6 +106,11 @@ export function BrowseFilterFields({
             ))}
           </Select>
         </div>
+        {!filters.lat && (
+          <p className="text-xs text-muted">
+            Géolocalisez-vous pour activer le rayon de recherche.
+          </p>
+        )}
         {filters.lat && (
           <button
             type="button"

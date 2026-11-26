@@ -11,6 +11,7 @@ import {
   fetchBrowseListings,
   fetchBrowsePlaces,
   fetchFacets,
+  readLayout,
   toBrowseView,
 } from "@/lib/listings";
 import { fetchMyProfile } from "@/lib/profile-service";
@@ -77,7 +78,7 @@ async function Listings({
   const clampedPage = browsePageClamp(view.page, data.totalPages);
   if (clampedPage !== null) {
     redirect(
-      `/listings?${browseViewToParams(filters, clampedPage, sort).toString()}`,
+      `/listings?${browseViewToParams(filters, clampedPage, sort, readLayout(params.get("view"))).toString()}`,
     );
   }
 

@@ -17,6 +17,7 @@ import {
   browseViewToParams,
   isDefaultBrowseView,
   narrowsCollection,
+  readLayout,
   toBrowseView,
 } from "./browse-url";
 
@@ -119,6 +120,12 @@ describe("toBrowseView", () => {
       sort: "recent",
       specialty: undefined,
       city: undefined,
+      cityCode: undefined,
+      department: undefined,
+      lat: undefined,
+      lng: undefined,
+      radiusKm: undefined,
+      limit: 10,
       urgentOnly: undefined,
       startDateFrom: undefined,
       startDateTo: undefined,
@@ -551,6 +558,7 @@ describe("browseViewFromParams", () => {
       lat: "",
       lng: "",
       radiusKm: "",
+      limit: "10",
       q: "dermatologue",
       from: "2026-10-01",
       to: "2026-10-31",
@@ -569,6 +577,7 @@ describe("browseViewFromParams", () => {
       lat: "",
       lng: "",
       radiusKm: "",
+      limit: "10",
       q: "dermatologue",
       from: "2026-10-01",
       to: "2026-10-31",
@@ -729,6 +738,33 @@ describe("the structured location round-trips through the URL", () => {
   });
 });
 
+describe("layout and page size round-trip through the URL", () => {
+  it("writes a non-default layout and page size", () => {
+    const params = browseViewToParams(
+      { ...EMPTY_BROWSE_FILTERS, limit: "20" },
+      1,
+      "recent",
+      "map",
+    );
+    expect(params.get("view")).toBe("map");
+    expect(params.get("limit")).toBe("20");
+  });
+
+  it("omits the defaults", () => {
+    const params = browseViewToParams(EMPTY_BROWSE_FILTERS, 1, "recent");
+    expect(params.has("view")).toBe(false);
+    expect(params.has("limit")).toBe(false);
+  });
+
+  it("reads back a known layout and refuses an unknown one", () => {
+    expect(readLayout("list")).toBe("list");
+    expect(readLayout("nonsense")).toBe("split");
+    expect(
+      browseViewFromParams(new URLSearchParams("limit=20")).filters.limit,
+    ).toBe("20");
+  });
+});
+
 describe("browse view round-trips through the URL", () => {
   it("reads back the view it was written from", () => {
     const written = browseViewToParams(
@@ -740,6 +776,7 @@ describe("browse view round-trips through the URL", () => {
         lat: "",
         lng: "",
         radiusKm: "",
+        limit: "10",
         q: "dermatologue",
         from: "2026-10-01",
         to: "2026-10-31",
@@ -761,6 +798,7 @@ describe("browse view round-trips through the URL", () => {
       lat: "",
       lng: "",
       radiusKm: "",
+      limit: "10",
       q: "dermatologue",
       from: "2026-10-01",
       to: "2026-10-31",

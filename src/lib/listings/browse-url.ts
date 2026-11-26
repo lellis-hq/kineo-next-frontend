@@ -9,6 +9,7 @@ import { SPECIALTY_LABELS } from "@/lib/profile";
 import type { Specialty } from "@/lib/types/api";
 import type {
   BrowseFormFilters,
+  BrowseLayout,
   BrowseSort,
   BrowseView,
 } from "./browse-contracts";
@@ -18,6 +19,8 @@ export const DEFAULT_BROWSE_VIEW = { page: 1, sort: "recent" } as const;
 
 const CITY_CODE = /^(?:\d{5}|2[AB]\d{3})$/i;
 const DEPARTMENT_CODE = /^(?:\d{2}|2[AB]|97\d)$/i;
+const BROWSE_LAYOUTS: readonly BrowseLayout[] = ["split", "list", "map"];
+const PAGE_SIZES = [10, 20, 50] as const;
 
 /** A radius is one filter: a lone coordinate would change its meaning. */
 function readCentre(
@@ -64,6 +67,7 @@ export function toBrowseView(
       ? filters.department.trim().toUpperCase()
       : undefined,
     ...readCentre(filters.lat, filters.lng, filters.radiusKm),
+    limit: readPageSize(filters.limit),
     q: filters.q.trim() || undefined,
     urgentOnly: filters.urgentOnly || undefined,
     startDateFrom: toIsoDayBound(filters.from),
@@ -116,6 +120,19 @@ function readCode(raw: string | null, pattern: RegExp): string {
   return pattern.test(value) ? value.toUpperCase() : "";
 }
 
+export function readLayout(raw: string | null): BrowseLayout {
+  return BROWSE_LAYOUTS.includes(raw as BrowseLayout)
+    ? (raw as BrowseLayout)
+    : "split";
+}
+
+function readPageSize(raw: string | null): number | undefined {
+  const size = Number(raw ?? "");
+  return PAGE_SIZES.includes(size as (typeof PAGE_SIZES)[number])
+    ? size
+    : undefined;
+}
+
 function readDate(raw: string): string {
   if (!ISO_DAY.test(raw)) return "";
   // `Date.parse("2026-02-30")` rolls over rather than failing, so the day is
@@ -146,6 +163,7 @@ export function browseViewFromParams(params: Pick<URLSearchParams, "get">): {
       lat: params.get("lat") ?? "",
       lng: params.get("lng") ?? "",
       radiusKm: params.get("radiusKm") ?? "",
+      limit: String(readPageSize(params.get("limit")) ?? 10),
       q: (params.get("q") ?? "").trim(),
       from: readDate(params.get("from") ?? ""),
       to: readDate(params.get("to") ?? ""),
@@ -174,6 +192,7 @@ export function browseViewToParams(
   filters: BrowseFormFilters,
   page: number,
   sort: BrowseSort,
+  layout: BrowseLayout = "split",
 ): URLSearchParams {
   const params = new URLSearchParams();
 
@@ -196,6 +215,9 @@ export function browseViewToParams(
   }
   const q = filters.q.trim();
   if (q) params.set("q", q);
+  const size = readPageSize(filters.limit);
+  if (size !== undefined && size !== 10) params.set("limit", String(size));
+  if (layout !== "split") params.set("view", layout);
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
   if (filters.urgentOnly) params.set("urgent", "true");
