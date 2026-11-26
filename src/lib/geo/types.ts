@@ -1,11 +1,14 @@
-/** A commune as the combobox offers it; the codes are what get committed. */
+/**
+ * A commune as the completion API offers it. The codes are resolved only when
+ * the reader picks it, which keeps one external call per search instead of two.
+ */
 export interface CommuneSuggestion {
-  codeInsee: string;
   nom: string;
-  codeDepartement: string;
-  codePostal: string | null;
-  latitude: number | null;
-  longitude: number | null;
+  codeInsee?: string;
+  codeDepartement?: string;
+  codePostal?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface DepartmentSuggestion {

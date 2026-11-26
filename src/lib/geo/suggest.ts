@@ -1,24 +1,38 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { fetchGeoJson } from "./fetch";
+import { filterDepartements } from "./filter";
 import { normalizeSearchText } from "./normalize";
 import type {
   CommuneSuggestion,
   DepartmentSuggestion,
   GeoSuggestions,
+  SelectedPlace,
 } from "./types";
 
 /**
- * The frontend owns place resolution. This is the only place that talks to a
- * public geo API; the Nest backend never calls one and never stores a reference
- * dataset. Codes are resolved here and sent to the backend, which validates
- * and stores them.
+ * The frontend owns place resolution: this module is the only one that talks
+ * to a public geo API. The Nest backend never calls one and never stores a
+ * reference dataset; it only validates and stores the codes resolved here.
  *
- * `'use cache'` is enabled by `cacheComponents` in next.config.ts. One cache
- * entry per normalised query, long-lived because the COG millésime changes
- * yearly, so a keystroke costs one internal request at most.
+ * All caching is confined to this file. Docker self-hosting uses `'use cache'`
+ * (persistent in-memory); switching to Vercel is a one-line change to
+ * `'use cache: remote'` on each cached function below.
  */
 const GEOPLATEFORME = "https://data.geopf.fr/geocodage";
 const ADMINISTRATIVE = "https://geo.api.gouv.fr";
 const LIMIT = 6;
+
+interface CompletionResult {
+  names?: string[];
+  city?: string;
+  fulltext?: string;
+  kind?: string;
+  poiType?: string[];
+}
+
+interface CompletionResponse {
+  results?: CompletionResult[];
+}
 
 interface AddressProperties {
   name?: string;
@@ -27,13 +41,15 @@ interface AddressProperties {
   depcode?: string;
   postcode?: string;
   context?: string;
-  population?: number;
-  [key: string]: unknown;
 }
 
 interface AddressFeature {
   properties: AddressProperties;
   geometry?: { coordinates: [number, number] };
+}
+
+interface AddressResponse {
+  features?: AddressFeature[];
 }
 
 interface DepartmentRow {
@@ -42,66 +58,96 @@ interface DepartmentRow {
   codeRegion: string;
 }
 
-function departmentCodeFrom(feature: AddressFeature): string {
-  const { depcode, context } = feature.properties;
-  if (depcode) return depcode.toUpperCase();
-  const [code] = (context ?? "").split(",");
-  return code?.trim().toUpperCase() ?? "";
+/** The 101 departments, fetched once per deployment rather than per query. */
+export async function getDepartements(): Promise<DepartmentSuggestion[]> {
+  "use cache";
+  cacheLife("max");
+  cacheTag("geo-departements");
+
+  const params = new URLSearchParams({
+    fields: "nom,code,codeRegion",
+  });
+  return fetchGeoJson<DepartmentRow[]>(
+    `${ADMINISTRATIVE}/departements?${params}`,
+  );
 }
 
-async function fetchCommunes(query: string): Promise<CommuneSuggestion[]> {
+/** One completion call for communes; departments come from the cached list. */
+export async function searchCommunes(
+  query: string,
+): Promise<CommuneSuggestion[]> {
+  "use cache";
+  cacheLife({ stale: 300, revalidate: 86_400, expire: 604_800 });
+  cacheTag("geo-communes");
+
+  const params = new URLSearchParams({
+    text: query,
+    maximumResponses: String(LIMIT),
+  });
+  const body = await fetchGeoJson<CompletionResponse>(
+    `${GEOPLATEFORME}/completion/?${params}`,
+  );
+
+  const seen = new Set<string>();
+  return (body.results ?? [])
+    .filter(
+      (result) =>
+        result.poiType?.includes("commune") || result.kind === "municipality",
+    )
+    .map((result) => result.names?.[0] ?? result.city ?? result.fulltext ?? "")
+    .filter((nom) => {
+      if (!nom || seen.has(nom)) return false;
+      seen.add(nom);
+      return true;
+    })
+    .slice(0, LIMIT)
+    .map((nom) => ({ nom }));
+}
+
+/** Resolve the stable codes when a commune is actually chosen. */
+export async function resolveCommune(query: string): Promise<SelectedPlace> {
+  "use cache";
+  cacheLife({ stale: 300, revalidate: 86_400, expire: 604_800 });
+  cacheTag("geo-resolve");
+
   const params = new URLSearchParams({
     q: query,
     type: "municipality",
-    limit: String(LIMIT),
+    limit: "1",
   });
-  const response = await fetch(`${GEOPLATEFORME}/search?${params}`, {
-    headers: { Accept: "application/json" },
-    signal: AbortSignal.timeout(5_000),
-  });
-  if (!response.ok) return [];
+  const body = await fetchGeoJson<AddressResponse>(
+    `${GEOPLATEFORME}/search?${params}`,
+  );
+  const feature = body.features?.[0];
+  if (!feature) throw new Error("Commune introuvable");
 
-  const body = (await response.json()) as { features?: AddressFeature[] };
-  return (body.features ?? []).map((feature) => ({
-    codeInsee: feature.properties.citycode ?? "",
-    nom: feature.properties.city ?? feature.properties.name ?? "",
-    codeDepartement: departmentCodeFrom(feature),
-    codePostal: feature.properties.postcode ?? null,
-    latitude: feature.geometry?.coordinates[1] ?? null,
-    longitude: feature.geometry?.coordinates[0] ?? null,
-  }));
+  const { citycode, city, name, depcode, postcode, context } =
+    feature.properties;
+  const [contextCode] = (context ?? "").split(",");
+
+  return {
+    kind: "commune",
+    label: city ?? name ?? query,
+    cityCodeInsee: citycode,
+    departmentCode: (depcode ?? contextCode ?? "").trim().toUpperCase(),
+    postalCode: postcode,
+    latitude: feature.geometry?.coordinates[1],
+    longitude: feature.geometry?.coordinates[0],
+  };
 }
 
-async function fetchDepartements(
-  query: string,
-): Promise<DepartmentSuggestion[]> {
-  const params = new URLSearchParams({
-    nom: query,
-    fields: "nom,code,codeRegion",
-    limit: String(LIMIT),
-  });
-  const response = await fetch(`${ADMINISTRATIVE}/departements?${params}`, {
-    headers: { Accept: "application/json" },
-    signal: AbortSignal.timeout(5_000),
-  });
-  if (!response.ok) return [];
-
-  return (await response.json()) as DepartmentRow[];
-}
-
+/** Compose the two cached sources; no external call happens here directly. */
 export async function searchPlaces(query: string): Promise<GeoSuggestions> {
-  "use cache";
-  cacheLife({ stale: 300, revalidate: 86_400, expire: 604_800 });
-  cacheTag("geo-reference");
-
   const normalized = normalizeSearchText(query);
   if (normalized.length < 2) return { communes: [], departements: [] };
 
-  // One of the two APIs failing must not hide the other half of the list.
   const [communes, departements] = await Promise.all([
-    fetchCommunes(normalized).catch(() => []),
-    fetchDepartements(normalized).catch(() => []),
+    searchCommunes(normalized),
+    getDepartements(),
   ]);
 
-  return { communes, departements };
+  return {
+    communes,
+    departements: filterDepartements(departements, normalized, LIMIT),
+  };
 }

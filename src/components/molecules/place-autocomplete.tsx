@@ -2,6 +2,7 @@
 
 import {
   type KeyboardEvent,
+  useDeferredValue,
   useEffect,
   useId,
   useMemo,
@@ -10,6 +11,7 @@ import {
 } from "react";
 import { ChevronDownIcon, MapPinIcon } from "@/components/atoms/icons";
 import { cn } from "@/lib/cn";
+import { normalizeSearchText } from "@/lib/geo/normalize";
 import type { SelectedPlace } from "@/lib/geo/types";
 import { usePlaceSuggestions } from "@/lib/hooks/use-place-suggestions";
 import { MAP_PILL } from "@/lib/layout";
@@ -51,21 +53,20 @@ export function PlaceAutocomplete({
   const selectingRef = useRef(false);
 
   useEffect(() => setText(value), [value]);
-  const { suggestions, status } = usePlaceSuggestions(open ? text : "");
+  const deferredText = useDeferredValue(text);
+  const { suggestions, status } = usePlaceSuggestions(open ? deferredText : "");
 
   const options = useMemo<Option[]>(() => {
+    // Completion returns names, not codes. The codes are resolved only when
+    // the reader picks a commune, keeping one external call per search.
     const communes = suggestions.communes.map((commune) => ({
-      id: `${listId}-c-${commune.codeInsee}`,
-      label: `${commune.nom} (${commune.codeDepartement})`,
-      detail: commune.codePostal ?? "",
+      id: `${listId}-c-${normalizeSearchText(commune.nom)}`,
+      label: commune.nom,
+      detail: "Commune",
       place: {
         kind: "commune" as const,
         label: commune.nom,
-        cityCodeInsee: commune.codeInsee,
-        departmentCode: commune.codeDepartement,
-        postalCode: commune.codePostal ?? undefined,
-        latitude: commune.latitude ?? undefined,
-        longitude: commune.longitude ?? undefined,
+        departmentCode: "",
       },
     }));
     const departments = suggestions.departements.map((department) => ({
@@ -86,11 +87,29 @@ export function PlaceAutocomplete({
     setActive(-1);
   };
 
-  const select = (option: Option) => {
+  const select = async (option: Option) => {
     selectingRef.current = true;
-    setText(option.place.label);
+    const label = option.place.label;
+    setText(label);
     close();
-    onCommit(option.place, option.place.label);
+
+    let place = option.place;
+    if (place.kind === "commune" && !place.cityCodeInsee) {
+      try {
+        const response = await fetch(
+          `/api/geo/resolve?q=${encodeURIComponent(label)}`,
+        );
+        if (!response.ok) throw new Error("resolve failed");
+        place = (await response.json()) as SelectedPlace;
+      } catch {
+        // Resolution is best-effort: free text still filters the listings.
+        onCommit(null, label);
+        inputRef.current?.focus();
+        return;
+      }
+    }
+
+    onCommit(place, label);
     inputRef.current?.focus();
   };
 

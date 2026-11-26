@@ -5,8 +5,17 @@ import { normalizeSearchText } from "@/lib/geo/normalize";
 import type { GeoSuggestions } from "@/lib/geo/types";
 
 const EMPTY: GeoSuggestions = { communes: [], departements: [] };
+const MAX_CACHED = 50;
 const cache = new Map<string, GeoSuggestions>();
 const inFlight = new Map<string, Promise<GeoSuggestions>>();
+
+function remember(key: string, value: GeoSuggestions) {
+  cache.set(key, value);
+  if (cache.size > MAX_CACHED) {
+    const oldest = cache.keys().next().value;
+    if (oldest !== undefined) cache.delete(oldest);
+  }
+}
 
 async function load(query: string): Promise<GeoSuggestions> {
   const response = await fetch(
@@ -58,7 +67,7 @@ export function usePlaceSuggestions(query: string) {
         // search term, and uppercase/accented input behaves identically.
         pending = load(key)
           .then((value) => {
-            cache.set(key, value);
+            remember(key, value);
             return value;
           })
           .finally(() => inFlight.delete(key));
@@ -74,7 +83,7 @@ export function usePlaceSuggestions(query: string) {
       } catch {
         if (!cancelled) setStatus("error");
       }
-    }, 250);
+    }, 300);
 
     return () => {
       cancelled = true;

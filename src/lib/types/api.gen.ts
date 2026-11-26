@@ -672,8 +672,14 @@ export interface components {
             profileType: "INSTALLED" | "REPLACEMENT" | "BOTH";
             /** @description 11-digit RPPS number of the healthcare professional (spaces, dots and dashes are accepted) */
             rppsNumber?: string;
-            /** @description Main city of practice */
+            /** @description Main city label; the stable code is cityCodeInsee */
             city?: string;
+            /** @description INSEE code of the selected commune */
+            cityCodeInsee?: string;
+            /** @description Postal code of the selected commune */
+            postalCode?: string;
+            /** @description Code of the selected department */
+            departmentCode?: string;
             /** @description Latitude of the main practice location */
             latitude?: number;
             /** @description Longitude of the main practice location */
@@ -692,6 +698,9 @@ export interface components {
             verified: boolean;
             isPublic: boolean;
             city: string | null;
+            cityCodeInsee: string | null;
+            postalCode: string | null;
+            departmentCode: string | null;
             latitude: number | null;
             longitude: number | null;
             /** Format: date-time */
@@ -709,6 +718,9 @@ export interface components {
                 verified: boolean;
                 isPublic: boolean;
                 city: string | null;
+                cityCodeInsee: string | null;
+                postalCode: string | null;
+                departmentCode: string | null;
                 latitude: number | null;
                 longitude: number | null;
                 /** Format: date-time */
@@ -732,6 +744,9 @@ export interface components {
             verified: boolean;
             isPublic: boolean;
             city: string | null;
+            cityCodeInsee: string | null;
+            postalCode: string | null;
+            departmentCode: string | null;
             latitude: number | null;
             longitude: number | null;
             /** Format: date-time */
@@ -752,8 +767,14 @@ export interface components {
             profileType?: "INSTALLED" | "REPLACEMENT" | "BOTH";
             /** @description 11-digit RPPS number of the healthcare professional (spaces, dots and dashes are accepted) */
             rppsNumber?: string;
-            /** @description Main city of practice */
+            /** @description Main city label; the stable code is cityCodeInsee */
             city?: string;
+            /** @description INSEE code of the selected commune */
+            cityCodeInsee?: string;
+            /** @description Postal code of the selected commune */
+            postalCode?: string;
+            /** @description Code of the selected department */
+            departmentCode?: string;
             /** @description Latitude of the main practice location */
             latitude?: number;
             /** @description Longitude of the main practice location */
@@ -766,8 +787,14 @@ export interface components {
             name: string;
             /** @description Street address of the practice */
             address: string;
-            /** @description City where the practice is located */
+            /** @description City label shown on the practice; the stable code is cityCodeInsee */
             city: string;
+            /** @description INSEE code of the selected commune */
+            cityCodeInsee?: string;
+            /** @description Postal code of the selected commune */
+            postalCode?: string;
+            /** @description Code of the selected department */
+            departmentCode?: string;
             /** @description Latitude of the practice location */
             latitude?: number;
             /** @description Longitude of the practice location */
@@ -780,6 +807,9 @@ export interface components {
             name: string;
             address: string;
             city: string;
+            cityCodeInsee: string | null;
+            postalCode: string | null;
+            departmentCode: string | null;
             latitude: number | null;
             longitude: number | null;
             isPublic: boolean;
@@ -792,6 +822,9 @@ export interface components {
                 name: string;
                 address: string;
                 city: string;
+                cityCodeInsee: string | null;
+                postalCode: string | null;
+                departmentCode: string | null;
                 latitude: number | null;
                 longitude: number | null;
                 isPublic: boolean;
@@ -810,8 +843,14 @@ export interface components {
             name?: string;
             /** @description Street address of the practice */
             address?: string;
-            /** @description City where the practice is located */
+            /** @description City label shown on the practice; the stable code is cityCodeInsee */
             city?: string;
+            /** @description INSEE code of the selected commune */
+            cityCodeInsee?: string;
+            /** @description Postal code of the selected commune */
+            postalCode?: string;
+            /** @description Code of the selected department */
+            departmentCode?: string;
             /** @description Latitude of the practice location */
             latitude?: number;
             /** @description Longitude of the practice location */
@@ -1858,8 +1897,18 @@ export interface operations {
             query?: {
                 /** @description Filter by medical specialty */
                 specialty?: "GENERALIST" | "DENTIST" | "DERMATOLOGIST" | "PSYCHIATRIST" | "OTHER";
-                /** @description Filter by practice city */
+                /** @description Legacy substring filter by practice city */
                 city?: string;
+                /** @description Filter by the INSEE code of the practice's commune */
+                cityCode?: string;
+                /** @description Filter by the practice's department code */
+                department?: string;
+                /** @description Centre latitude of a radius search */
+                lat?: number;
+                /** @description Centre longitude of a radius search */
+                lng?: number;
+                /** @description Radius in kilometres around lat/lng */
+                radiusKm?: number;
                 /** @description Free-text match on the posting's title and description, case-insensitive */
                 q?: string;
                 /** @description Filter urgent listings only */
@@ -1934,8 +1983,18 @@ export interface operations {
             query?: {
                 /** @description Filter by medical specialty */
                 specialty?: "GENERALIST" | "DENTIST" | "DERMATOLOGIST" | "PSYCHIATRIST" | "OTHER";
-                /** @description Filter by practice city */
+                /** @description Legacy substring filter by practice city */
                 city?: string;
+                /** @description Filter by the INSEE code of the practice's commune */
+                cityCode?: string;
+                /** @description Filter by the practice's department code */
+                department?: string;
+                /** @description Centre latitude of a radius search */
+                lat?: number;
+                /** @description Centre longitude of a radius search */
+                lng?: number;
+                /** @description Radius in kilometres around lat/lng */
+                radiusKm?: number;
                 /** @description Free-text match on the posting's title and description, case-insensitive */
                 q?: string;
                 /** @description Filter urgent listings only */
@@ -1977,8 +2036,18 @@ export interface operations {
             query?: {
                 /** @description Filter by medical specialty */
                 specialty?: "GENERALIST" | "DENTIST" | "DERMATOLOGIST" | "PSYCHIATRIST" | "OTHER";
-                /** @description Filter by practice city */
+                /** @description Legacy substring filter by practice city */
                 city?: string;
+                /** @description Filter by the INSEE code of the practice's commune */
+                cityCode?: string;
+                /** @description Filter by the practice's department code */
+                department?: string;
+                /** @description Centre latitude of a radius search */
+                lat?: number;
+                /** @description Centre longitude of a radius search */
+                lng?: number;
+                /** @description Radius in kilometres around lat/lng */
+                radiusKm?: number;
                 /** @description Free-text match on the posting's title and description, case-insensitive */
                 q?: string;
                 /** @description Filter urgent listings only */
@@ -2014,8 +2083,18 @@ export interface operations {
             query: {
                 /** @description Filter by medical specialty */
                 specialty?: "GENERALIST" | "DENTIST" | "DERMATOLOGIST" | "PSYCHIATRIST" | "OTHER";
-                /** @description Filter by practice city */
+                /** @description Legacy substring filter by practice city */
                 city?: string;
+                /** @description Filter by the INSEE code of the practice's commune */
+                cityCode?: string;
+                /** @description Filter by the practice's department code */
+                department?: string;
+                /** @description Centre latitude of a radius search */
+                lat?: number;
+                /** @description Centre longitude of a radius search */
+                lng?: number;
+                /** @description Radius in kilometres around lat/lng */
+                radiusKm?: number;
                 /** @description Free-text match on the posting's title and description, case-insensitive */
                 q?: string;
                 /** @description Filter urgent listings only */
@@ -2055,8 +2134,18 @@ export interface operations {
             query?: {
                 /** @description Filter by medical specialty */
                 specialty?: "GENERALIST" | "DENTIST" | "DERMATOLOGIST" | "PSYCHIATRIST" | "OTHER";
-                /** @description Filter by practice city */
+                /** @description Legacy substring filter by practice city */
                 city?: string;
+                /** @description Filter by the INSEE code of the practice's commune */
+                cityCode?: string;
+                /** @description Filter by the practice's department code */
+                department?: string;
+                /** @description Centre latitude of a radius search */
+                lat?: number;
+                /** @description Centre longitude of a radius search */
+                lng?: number;
+                /** @description Radius in kilometres around lat/lng */
+                radiusKm?: number;
                 /** @description Free-text match on the posting's title and description, case-insensitive */
                 q?: string;
                 /** @description Filter urgent listings only */
