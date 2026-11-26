@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ChevronDownIcon, MapPinIcon } from "@/components/atoms/icons";
+import { CloseIcon, MapPinIcon } from "@/components/atoms/icons";
 import { cn } from "@/lib/cn";
 import { normalizeSearchText } from "@/lib/geo/normalize";
 import type { SelectedPlace } from "@/lib/geo/types";
@@ -193,10 +193,23 @@ export function PlaceAutocomplete({
             overlay && "xl:placeholder:text-black/45",
           )}
         />
-        <ChevronDownIcon
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 right-3 size-3.5 -translate-y-1/2 text-muted"
-        />
+        {text.length > 0 && (
+          <button
+            type="button"
+            aria-label="Effacer la ville"
+            // Keep DOM focus on the input: a blur would commit the old text.
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              setText("");
+              close();
+              onCommit(null, "");
+              inputRef.current?.focus();
+            }}
+            className="absolute top-1/2 right-2.5 grid size-6 -translate-y-1/2 place-items-center rounded-full text-muted transition-colors hover:bg-surface-3 hover:text-foreground"
+          >
+            <CloseIcon className="size-3.5" />
+          </button>
+        )}
       </div>
 
       {open && text.trim().length >= 2 && (
