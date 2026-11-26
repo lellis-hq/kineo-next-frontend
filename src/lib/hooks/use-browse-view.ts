@@ -78,12 +78,14 @@ export function useBrowseView() {
       next: { filters: BrowseFormFilters; page: number; sort: BrowseSort },
       method: "replace" | "push",
       kind: "filters" | "page",
+      /** Carried explicitly by a pick that reveals the list. */
+      layoutOverride?: BrowseLayout,
     ) => {
       const query = browseViewToParams(
         next.filters,
         next.page,
         next.sort,
-        layoutRef.current,
+        layoutOverride ?? layoutRef.current,
       );
       const search = query.toString();
       const url = search ? `${pathname}?${search}` : pathname;
@@ -107,6 +109,15 @@ export function useBrowseView() {
     },
     [filters, page, sort, pathname, router],
   );
+
+  /**
+   * Optimistic part of a pick: the caller owns the single URL write (the page
+   * turn) and passes the new layout explicitly to `writeView`.
+   */
+  const revealSplit = useCallback(() => {
+    layoutRef.current = "split";
+    setLayoutState("split");
+  }, []);
 
   /** A filter change returns to the first page, in the same URL write. */
   const applyFilters = useCallback(
@@ -165,6 +176,7 @@ export function useBrowseView() {
     view,
     layout,
     setLayout,
+    revealSplit,
     isNavigating,
     pendingWrite,
     writeView,

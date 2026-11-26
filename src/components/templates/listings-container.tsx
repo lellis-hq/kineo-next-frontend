@@ -63,6 +63,7 @@ export function ListingsContainer({
     writeView: browse.writeView,
     layout: browse.layout,
     setLayout: browse.setLayout,
+    revealSplit: browse.revealSplit,
     data: resource.data,
     onScreenIds: resource.onScreenIds,
     scrollTo: resource.scrollTo,

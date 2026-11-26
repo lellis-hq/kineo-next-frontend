@@ -25,6 +25,7 @@ type WriteView = (
   next: { filters: BrowseFormFilters; page: number; sort: BrowseSort },
   method: "replace" | "push",
   kind: "filters" | "page",
+  layoutOverride?: BrowseLayout,
 ) => void;
 
 /**
@@ -39,6 +40,7 @@ export function useBrowsePicking({
   writeView,
   layout,
   setLayout,
+  revealSplit,
   data,
   onScreenIds,
   scrollTo,
@@ -52,6 +54,7 @@ export function useBrowsePicking({
   writeView: WriteView;
   layout: BrowseLayout;
   setLayout: (layout: BrowseLayout) => void;
+  revealSplit: () => void;
   data: BrowseListingsData;
   onScreenIds: Set<string>;
   scrollTo: (id: string) => void;
@@ -86,7 +89,10 @@ export function useBrowsePicking({
    * not every caller awaits it.
    */
   const turnToPage = useCallback(
-    (id: string): Promise<ListingPageOfResult> => {
+    (
+      id: string,
+      layoutOverride?: BrowseLayout,
+    ): Promise<ListingPageOfResult> => {
       scrollTo(id);
       return fetchListingPageOf(id, {
         ...view,
@@ -97,7 +103,12 @@ export function useBrowsePicking({
             clearScroll();
             return result;
           }
-          writeView({ filters, page: result.page, sort }, "replace", "page");
+          writeView(
+            { filters, page: result.page, sort },
+            "replace",
+            "page",
+            layoutOverride,
+          );
           return result;
         })
         .catch((): ListingPageOfResult => {
@@ -118,9 +129,10 @@ export function useBrowsePicking({
   /** A posting picked on the map: selects it and brings its row into view. */
   const pickListing = useCallback(
     (listing: MapPlaceListing) => {
-      // « Carte seule » has no list to scroll to: reveal it.
+      // « Carte seule » has no list to scroll to: reveal it. The page turn
+      // below is the single URL write and carries the new layout explicitly.
       if (layout === "map") {
-        setLayout("split");
+        revealSplit();
       }
 
       setHoveredListingId(listing.id);
@@ -134,11 +146,11 @@ export function useBrowsePicking({
 
       // Scroll now if the row is on screen; otherwise the landing turns the
       // page and waits for the row.
-      if (landing.landPick(listing)) {
+      if (landing.landPick(listing, "split")) {
         scrollTo(listing.id);
       }
     },
-    [layout, landing, scrollTo, setLayout],
+    [layout, landing, revealSplit, scrollTo],
   );
 
   /**
