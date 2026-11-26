@@ -3,10 +3,11 @@
 import Form from "next/form";
 import { useState } from "react";
 import { InlineAlert } from "@/components/molecules/inline-alert";
+import { PlaceAutocomplete } from "@/components/molecules/place-autocomplete";
 import { Select } from "@/components/molecules/select";
 import { SubmitButton } from "@/components/molecules/submit-button";
+import type { SelectedPlace } from "@/lib/geo/types";
 import {
-  CITY_MAX_LENGTH,
   PROFILE_TYPE_LABELS,
   type ProfileFormData,
   type ProfileFormValues,
@@ -30,6 +31,8 @@ export function ProfileForm({
   onSubmit: (payload: ProfileFormData) => Promise<string | undefined>;
 }) {
   const [error, setError] = useState("");
+  const [cityValue, setCityValue] = useState(initialValues.city);
+  const [place, setPlace] = useState<SelectedPlace | null>(null);
 
   async function handleSubmit(formData: FormData) {
     setError("");
@@ -43,6 +46,11 @@ export function ProfileForm({
       ) as ProfileFormValues["profileType"],
       rppsNumber: String(formData.get("rppsNumber") ?? "").trim(),
       city: String(formData.get("city") ?? "").trim(),
+      cityCodeInsee: String(formData.get("cityCodeInsee") ?? "").trim(),
+      departmentCode: String(formData.get("departmentCode") ?? "").trim(),
+      postalCode: String(formData.get("postalCode") ?? "").trim(),
+      latitude: String(formData.get("latitude") ?? "").trim(),
+      longitude: String(formData.get("longitude") ?? "").trim(),
       isPublic: formData.get("isPublic") === "on",
     };
 
@@ -126,13 +134,37 @@ export function ProfileForm({
             <span className="field-label">Ville principale</span>
             <span className="shrink-0 text-xs text-muted">Optionnel</span>
           </span>
+          <PlaceAutocomplete
+            id="profile-city"
+            label="Ville principale"
+            placeholder="Ville ou département"
+            value={initialValues.city}
+            onCommit={(selected, text) => {
+              setCityValue(text);
+              setPlace(selected);
+            }}
+          />
+          <input type="hidden" name="city" value={cityValue} />
           <input
-            name="city"
-            type="text"
-            maxLength={CITY_MAX_LENGTH}
-            placeholder="Paris"
-            defaultValue={initialValues.city}
-            className="field-input"
+            type="hidden"
+            name="cityCodeInsee"
+            value={place?.cityCodeInsee ?? ""}
+          />
+          <input
+            type="hidden"
+            name="departmentCode"
+            value={place?.departmentCode ?? ""}
+          />
+          <input
+            type="hidden"
+            name="postalCode"
+            value={place?.postalCode ?? ""}
+          />
+          <input type="hidden" name="latitude" value={place?.latitude ?? ""} />
+          <input
+            type="hidden"
+            name="longitude"
+            value={place?.longitude ?? ""}
           />
         </label>
       </div>

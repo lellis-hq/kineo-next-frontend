@@ -38,6 +38,17 @@ import type {
  */
 export const BROWSE_PAGE_SIZE = 10;
 
+/** The structured location filters, shared by all four browse reads. */
+function geoQuery(filters: BrowseFilters) {
+  return {
+    cityCode: filters.cityCode,
+    department: filters.department,
+    lat: filters.lat,
+    lng: filters.lng,
+    radiusKm: filters.radiusKm,
+  };
+}
+
 /**
  * GET /replacement-listings — the open postings matching a filter. Unset
  * filters are omitted: an empty string would search for a city called "".
@@ -53,6 +64,7 @@ export async function fetchBrowseListings(
   const query = buildQuery({
     specialty: filters.specialty,
     city: filters.city,
+    ...geoQuery(filters),
     q: filters.q,
     startDateFrom: filters.startDateFrom,
     startDateTo: filters.startDateTo,
@@ -105,6 +117,7 @@ export async function fetchBrowsePlaces(
   const query = buildQuery({
     specialty: filters.specialty,
     city: filters.city,
+    ...geoQuery(filters),
     q: filters.q,
     startDateFrom: filters.startDateFrom,
     startDateTo: filters.startDateTo,
@@ -148,6 +161,7 @@ export async function fetchListingPageOf(
     id,
     specialty: filters.specialty,
     city: filters.city,
+    ...geoQuery(filters),
     q: filters.q,
     startDateFrom: filters.startDateFrom,
     startDateTo: filters.startDateTo,
@@ -182,6 +196,7 @@ export async function fetchFacets(
 ): Promise<BrowseFacets> {
   const query = buildQuery({
     city: filters.city,
+    ...geoQuery(filters),
     q: filters.q,
     startDateFrom: filters.startDateFrom,
     startDateTo: filters.startDateTo,

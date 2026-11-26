@@ -61,7 +61,16 @@ export interface BrowseSelection {
  */
 export interface BrowseFilters {
   specialty?: Specialty;
+  /** Legacy substring filter, kept for old URLs and free-text entry. */
   city?: string;
+  /** INSEE code of the commune selected in the combobox. */
+  cityCode?: string;
+  /** Department code selected in the combobox. */
+  department?: string;
+  /** Centre and radius of a « autour de moi » search. */
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
   /** Free-text match on the posting's title and description. */
   q?: string;
   /** ISO date, inclusive lower bound on `startDate`. */
@@ -97,6 +106,11 @@ export const BROWSE_MAP_ID = "browse-map";
 export interface BrowseFormFilters {
   specialty: Specialty | "";
   city: string;
+  cityCode: string;
+  department: string;
+  lat: string;
+  lng: string;
+  radiusKm: string;
   q: string;
   from: string;
   to: string;
@@ -106,6 +120,11 @@ export interface BrowseFormFilters {
 export const EMPTY_BROWSE_FILTERS: BrowseFormFilters = {
   specialty: "",
   city: "",
+  cityCode: "",
+  department: "",
+  lat: "",
+  lng: "",
+  radiusKm: "",
   q: "",
   from: "",
   to: "",

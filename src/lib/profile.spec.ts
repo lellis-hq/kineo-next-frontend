@@ -15,6 +15,11 @@ const valid = {
   profileType: "REPLACEMENT",
   rppsNumber: "12345678901",
   city: "",
+  cityCodeInsee: "",
+  departmentCode: "",
+  postalCode: "",
+  latitude: "",
+  longitude: "",
   isPublic: true,
 } satisfies ProfileFormValues;
 

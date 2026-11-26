@@ -61,8 +61,10 @@ export function mapProfileError(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.fieldErrors && error.fieldErrors.length > 0) {
       return formatFieldErrors(error.fieldErrors, PROFILE_FIELD_LABELS, {
-        "City must contain only letters, spaces, hyphens or apostrophes":
-          "ne peut contenir que des lettres, espaces, tirets ou apostrophes.",
+        "City must contain only letters, digits, spaces, hyphens or apostrophes":
+          "ne peut contenir que des lettres, chiffres, espaces, tirets ou apostrophes.",
+        "departmentCode must match cityCodeInsee":
+          "ne correspond pas à la commune sélectionnée.",
         "String must be 11 digits": `doit contenir exactement ${RPPS_DIGITS} chiffres.`,
         "latitude and longitude must be provided together":
           "la latitude et la longitude doivent être renseignées ensemble.",
@@ -91,6 +93,9 @@ const PROFILE_FIELD_LABELS: Record<string, string> = {
   profileType: "Type de pratique",
   rppsNumber: "Numéro RPPS",
   city: "Ville principale",
+  cityCodeInsee: "Commune",
+  departmentCode: "Département",
+  postalCode: "Code postal",
   latitude: "Latitude",
   longitude: "Longitude",
   isPublic: "Visibilité publique",

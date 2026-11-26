@@ -12,7 +12,21 @@ export const RPPS_ERROR_MESSAGE = `Le numéro RPPS doit contenir exactement ${RP
 export const CITY_MAX_LENGTH = 100;
 
 import { percentOf } from "./format";
+import {
+  CITY_CODE_REGEX,
+  DEPARTMENT_CODE_REGEX,
+  POSTAL_CODE_REGEX,
+} from "./geo/validation";
 import type { ApiProfile, ApiUser, ProfileType, Specialty } from "./types/api";
+
+/** The structured location fields the API now accepts on a profile. */
+interface ApiProfileGeo {
+  cityCodeInsee?: string | null;
+  postalCode?: string | null;
+  departmentCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
 
 /**
  * The specialties, with their full name and their name in a fixed-width
@@ -142,6 +156,11 @@ export interface ProfileFormData {
   profileType: ProfileType;
   rppsNumber?: string;
   city?: string;
+  cityCodeInsee?: string;
+  departmentCode?: string;
+  postalCode?: string;
+  latitude?: number;
+  longitude?: number;
   isPublic: boolean;
 }
 
@@ -151,6 +170,11 @@ export interface ProfileFormValues {
   profileType: ProfileType | "";
   rppsNumber: string;
   city: string;
+  cityCodeInsee: string;
+  departmentCode: string;
+  postalCode: string;
+  latitude: string;
+  longitude: string;
   isPublic: boolean;
 }
 
@@ -159,15 +183,32 @@ export const EMPTY_PROFILE_FORM: ProfileFormValues = {
   profileType: "",
   rppsNumber: "",
   city: "",
+  cityCodeInsee: "",
+  departmentCode: "",
+  postalCode: "",
+  latitude: "",
+  longitude: "",
   isPublic: true,
 };
 
 export function profileToFormValues(profile: ApiProfile): ProfileFormValues {
+  const geo = profile as ApiProfileGeo;
   return {
     specialty: profile.specialty,
     profileType: profile.profileType,
     rppsNumber: profile.rppsNumber ?? "",
     city: profile.city ?? "",
+    cityCodeInsee: geo.cityCodeInsee ?? "",
+    departmentCode: geo.departmentCode ?? "",
+    postalCode: geo.postalCode ?? "",
+    latitude:
+      geo.latitude !== null && geo.latitude !== undefined
+        ? String(geo.latitude)
+        : "",
+    longitude:
+      geo.longitude !== null && geo.longitude !== undefined
+        ? String(geo.longitude)
+        : "",
     isPublic: profile.isPublic ?? true,
   };
 }
@@ -200,12 +241,49 @@ export function validateProfileForm(
     };
   }
 
+  const cityCodeInsee = values.cityCodeInsee.trim().toUpperCase();
+  if (cityCodeInsee && !CITY_CODE_REGEX.test(cityCodeInsee)) {
+    return { error: "Code commune invalide." };
+  }
+  const departmentCode = values.departmentCode.trim().toUpperCase();
+  if (departmentCode && !DEPARTMENT_CODE_REGEX.test(departmentCode)) {
+    return { error: "Code département invalide." };
+  }
+  const postalCode = values.postalCode.trim();
+  if (postalCode && !POSTAL_CODE_REGEX.test(postalCode)) {
+    return { error: "Le code postal doit contenir 5 chiffres." };
+  }
+  const lat = values.latitude.trim();
+  const lng = values.longitude.trim();
+  if (Boolean(lat) !== Boolean(lng)) {
+    return {
+      error: "La latitude et la longitude doivent être renseignées ensemble.",
+    };
+  }
+  const latitude = lat ? Number(lat) : undefined;
+  const longitude = lng ? Number(lng) : undefined;
+  if (
+    latitude !== undefined &&
+    (!Number.isFinite(latitude) ||
+      Math.abs(latitude) > 90 ||
+      longitude === undefined ||
+      !Number.isFinite(longitude) ||
+      Math.abs(longitude) > 180)
+  ) {
+    return { error: "Coordonnées invalides." };
+  }
+
   return {
     payload: {
       specialty: values.specialty,
       profileType: values.profileType,
       rppsNumber: rpps || undefined,
       city: city || undefined,
+      cityCodeInsee: cityCodeInsee || undefined,
+      departmentCode: departmentCode || undefined,
+      postalCode: postalCode || undefined,
+      latitude,
+      longitude,
       isPublic: values.isPublic,
     },
   };

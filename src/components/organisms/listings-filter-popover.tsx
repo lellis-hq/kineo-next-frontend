@@ -21,6 +21,7 @@ function countApplied(filters: BrowseFormFilters): number {
     filters.q.trim() !== "",
     filters.from !== "",
     filters.to !== "",
+    filters.lat !== "",
   ].filter(Boolean).length;
 }
 

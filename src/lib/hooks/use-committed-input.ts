@@ -4,35 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useLatest } from "@/lib/hooks/use-latest";
 
 /**
- * A text field that reports a value only when the reader is done with it
- * (`commit`, on submit/blur). Re-syncs from the prop so a reset clears the box
- * — except for the echo of its own commit (see `shouldAdoptCommitted`).
- */
-export function useCommittedInput(committed: string) {
-  const [draft, setDraft] = useState(committed);
-  const committedRef = useLatest(committed);
-  const lastSentRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (shouldAdoptCommitted(committed, lastSentRef.current)) {
-      lastSentRef.current = null;
-      setDraft(committed);
-    }
-  }, [committed]);
-
-  const commit = () => {
-    const trimmed = draft.trim();
-    if (trimmed !== committedRef.current) {
-      lastSentRef.current = trimmed;
-      return trimmed;
-    }
-    return null;
-  };
-
-  return { draft, setDraft, commit };
-}
-
-/**
  * A text field that applies its value after `delay` of quiet typing. Re-syncs
  * from the prop like `useCommittedInput`; `onCommit` is read through a ref so
  * a new identity doesn't restart the timer.

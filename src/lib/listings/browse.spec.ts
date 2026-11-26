@@ -546,6 +546,11 @@ describe("browseViewFromParams", () => {
     const params = new URLSearchParams({
       specialty: "DENTIST",
       city: "Lyon",
+      cityCode: "",
+      department: "",
+      lat: "",
+      lng: "",
+      radiusKm: "",
       q: "dermatologue",
       from: "2026-10-01",
       to: "2026-10-31",
@@ -559,6 +564,11 @@ describe("browseViewFromParams", () => {
     expect(filters).toEqual({
       specialty: "DENTIST",
       city: "Lyon",
+      cityCode: "",
+      department: "",
+      lat: "",
+      lng: "",
+      radiusKm: "",
       q: "dermatologue",
       from: "2026-10-01",
       to: "2026-10-31",
@@ -689,12 +699,47 @@ describe("browseViewToParams", () => {
   });
 });
 
+describe("the structured location round-trips through the URL", () => {
+  it("keeps a commune code and a department code", () => {
+    const written = browseViewToParams(
+      {
+        ...EMPTY_BROWSE_FILTERS,
+        city: "Lyon",
+        cityCode: "69001",
+        department: "69",
+      },
+      1,
+      "recent",
+    );
+    expect(written.get("cityCode")).toBe("69001");
+    expect(written.get("department")).toBe("69");
+
+    const { filters } = browseViewFromParams(new URLSearchParams(written));
+    expect(filters.cityCode).toBe("69001");
+    expect(filters.department).toBe("69");
+  });
+
+  it("keeps a centre only when the radius is complete", () => {
+    const { filters } = browseViewFromParams(
+      new URLSearchParams("lat=45.7&lng=4.8"),
+    );
+    expect(filters.lat).toBe("45.7");
+    // A partial centre is discarded before it reaches the backend.
+    expect(toBrowseView(filters).lat).toBeUndefined();
+  });
+});
+
 describe("browse view round-trips through the URL", () => {
   it("reads back the view it was written from", () => {
     const written = browseViewToParams(
       {
         specialty: "DENTIST",
         city: "Lyon",
+        cityCode: "",
+        department: "",
+        lat: "",
+        lng: "",
+        radiusKm: "",
         q: "dermatologue",
         from: "2026-10-01",
         to: "2026-10-31",
@@ -711,6 +756,11 @@ describe("browse view round-trips through the URL", () => {
     expect(filters).toEqual({
       specialty: "DENTIST",
       city: "Lyon",
+      cityCode: "",
+      department: "",
+      lat: "",
+      lng: "",
+      radiusKm: "",
       q: "dermatologue",
       from: "2026-10-01",
       to: "2026-10-31",

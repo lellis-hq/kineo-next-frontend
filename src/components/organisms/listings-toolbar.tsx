@@ -5,21 +5,19 @@ import {
   AlertTriangleIcon,
   ListIcon,
   MapIcon,
-  MapPinIcon,
   SearchIcon,
   SplitViewIcon,
 } from "@/components/atoms/icons";
 import { SelectPill } from "@/components/atoms/select-pill";
 import type { SpecialtyOption } from "@/components/molecules/browse-filter-fields";
 import { IconField } from "@/components/molecules/icon-field";
+import { PlaceAutocomplete } from "@/components/molecules/place-autocomplete";
 import { SegmentedControl } from "@/components/molecules/segmented-control";
 import { ListingsFilterPopover } from "@/components/organisms/listings-filter-popover";
 import { cn } from "@/lib/cn";
 import { plural } from "@/lib/format";
-import {
-  useCommittedInput,
-  useDebouncedInput,
-} from "@/lib/hooks/use-committed-input";
+import type { SelectedPlace } from "@/lib/geo/types";
+import { useDebouncedInput } from "@/lib/hooks/use-committed-input";
 import { MAP_PILL } from "@/lib/layout";
 import type {
   BrowseFormFilters,
@@ -64,8 +62,8 @@ interface ListingsToolbarProps {
  * The map's control row: search, city, sort, the « Filtres » popover (which
  * must not resize the map), urgency and layout.
  *
- * The city is free text because the backend matches it as a substring; it is
- * committed on submit/blur rather than per keystroke.
+ * The city field is a combobox: it resolves a place to stable codes, which the
+ * backend stores and filters on. Free text still works as a legacy fallback.
  */
 export function ListingsToolbar({
   filters,
@@ -82,14 +80,31 @@ export function ListingsToolbar({
   className,
 }: ListingsToolbarProps) {
   const overlay = onMap ? "overlay" : "plain";
-  // Local draft, committed on submit/blur; re-synced when filters reset.
-  const { draft, setDraft, commit } = useCommittedInput(filters.city);
 
-  const commitCity = () => {
-    const committed = commit();
-    if (committed !== null) {
-      onFiltersChange({ city: committed });
+  /**
+   * A picked suggestion carries stable codes; free text keeps the legacy
+   * substring filter and clears any code left by a previous pick.
+   */
+  const commitCity = (place: SelectedPlace | null, text: string) => {
+    if (place) {
+      onFiltersChange({
+        city: place.label,
+        cityCode: place.cityCodeInsee ?? "",
+        department: place.departmentCode,
+        lat: place.latitude !== undefined ? String(place.latitude) : "",
+        lng: place.longitude !== undefined ? String(place.longitude) : "",
+        radiusKm: "",
+      });
+      return;
     }
+    onFiltersChange({
+      city: text,
+      cityCode: "",
+      department: "",
+      lat: "",
+      lng: "",
+      radiusKm: "",
+    });
   };
 
   // Debounced rather than committed on blur: a search should answer as the
@@ -111,20 +126,12 @@ export function ListingsToolbar({
         overlay={onMap}
       />
 
-      <IconField
+      <PlaceAutocomplete
         id="browse-city"
-        icon={MapPinIcon}
-        label="Rechercher une ville"
-        placeholder="Ville ou CP"
-        value={draft}
-        onChange={setDraft}
-        onBlur={commitCity}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            commitCity();
-          }
-        }}
+        label="Rechercher une ville ou un département"
+        placeholder="Ville ou département"
+        value={filters.city}
+        onCommit={commitCity}
         overlay={onMap}
       />
 

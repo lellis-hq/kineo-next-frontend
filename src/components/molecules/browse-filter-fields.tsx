@@ -1,5 +1,7 @@
 "use client";
 
+import { Chip } from "@/components/atoms/chip";
+import { CrosshairIcon } from "@/components/atoms/icons";
 import { Select } from "@/components/molecules/select";
 import { useDebouncedInput } from "@/lib/hooks/use-committed-input";
 import type { BrowseFormFilters } from "@/lib/listings";
@@ -9,6 +11,8 @@ export interface SpecialtyOption {
   id: Specialty;
   label: string;
 }
+
+const RADII = ["5", "10", "25", "50"] as const;
 
 /**
  * The filters behind « Filtres ». The date fields are debounced: a native date
@@ -59,6 +63,58 @@ export function BrowseFilterFields({
             </option>
           ))}
         </Select>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <span className="field-label">Recherche géographique</span>
+        <div className="grid grid-cols-2 gap-2">
+          <Chip
+            size="sm"
+            className="justify-center"
+            onClick={() =>
+              navigator.geolocation?.getCurrentPosition(
+                (position) =>
+                  onFiltersChange({
+                    city: "",
+                    cityCode: "",
+                    department: "",
+                    lat: String(position.coords.latitude),
+                    lng: String(position.coords.longitude),
+                    radiusKm: filters.radiusKm || "10",
+                  }),
+                () => undefined,
+              )
+            }
+          >
+            <CrosshairIcon className="mr-1 inline-block size-3.5 align-[-0.15em]" />
+            Autour de moi
+          </Chip>
+          <Select
+            id="browse-radius"
+            aria-label="Rayon de recherche"
+            className="rounded-full py-1.5"
+            value={filters.radiusKm || "10"}
+            disabled={!filters.lat}
+            onChange={(event) =>
+              onFiltersChange({ radiusKm: event.target.value })
+            }
+          >
+            {RADII.map((radius) => (
+              <option key={radius} value={radius}>
+                {radius} km
+              </option>
+            ))}
+          </Select>
+        </div>
+        {filters.lat && (
+          <button
+            type="button"
+            onClick={() => onFiltersChange({ lat: "", lng: "", radiusKm: "" })}
+            className="text-xs font-medium text-primary hover:opacity-80"
+          >
+            Désactiver la recherche autour de moi
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
