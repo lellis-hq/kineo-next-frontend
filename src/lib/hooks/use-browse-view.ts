@@ -8,6 +8,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { useLatest } from "@/lib/hooks/use-latest";
 import {
   type BrowseFormFilters,
   type BrowseLayout,
@@ -45,6 +46,9 @@ export function useBrowseView() {
   const [layout, setLayoutState] = useState<BrowseLayout>(() =>
     readLayout(new URLSearchParams(paramsKey).get("view")),
   );
+  // Read synchronously by writeView: a pick can change the layout and turn the
+  // page in the same tick, and both URL writes must carry the new layout.
+  const layoutRef = useLatest(layout);
   const [pendingWrite, setPendingWrite] = useState<"filters" | "page" | null>(
     null,
   );
@@ -71,12 +75,7 @@ export function useBrowseView() {
    */
   const writeView = useCallback(
     (
-      next: {
-        filters: BrowseFormFilters;
-        page: number;
-        sort: BrowseSort;
-        layout: BrowseLayout;
-      },
+      next: { filters: BrowseFormFilters; page: number; sort: BrowseSort },
       method: "replace" | "push",
       kind: "filters" | "page",
     ) => {
@@ -84,7 +83,7 @@ export function useBrowseView() {
         next.filters,
         next.page,
         next.sort,
-        next.layout,
+        layoutRef.current,
       );
       const search = query.toString();
       const url = search ? `${pathname}?${search}` : pathname;
@@ -100,6 +99,7 @@ export function useBrowseView() {
   /** A visual reflow: optimistic locally, but still shared through the URL. */
   const setLayout = useCallback(
     (next: BrowseLayout) => {
+      layoutRef.current = next;
       setLayoutState(next);
       const query = browseViewToParams(filters, page, sort, next).toString();
       const url = query ? `${pathname}?${query}` : pathname;
@@ -112,35 +112,35 @@ export function useBrowseView() {
   const applyFilters = useCallback(
     (patch: Partial<BrowseFormFilters>) => {
       writeView(
-        { filters: { ...filters, ...patch }, page: 1, sort, layout },
+        { filters: { ...filters, ...patch }, page: 1, sort },
         "replace",
         "filters",
       );
     },
-    [filters, sort, layout, writeView],
+    [filters, sort, writeView],
   );
 
   const applySort = useCallback(
     (next: BrowseSort) => {
-      writeView({ filters, page: 1, sort: next, layout }, "replace", "filters");
+      writeView({ filters, page: 1, sort: next }, "replace", "filters");
     },
-    [filters, layout, writeView],
+    [filters, writeView],
   );
 
   const resetFilters = useCallback(() => {
     writeView(
-      { filters: EMPTY_BROWSE_FILTERS, page: 1, sort, layout },
+      { filters: EMPTY_BROWSE_FILTERS, page: 1, sort },
       "replace",
       "filters",
     );
-  }, [sort, layout, writeView]);
+  }, [sort, writeView]);
 
   /** A `push`, so the back button walks the pages. */
   const changePage = useCallback(
     (next: number) => {
-      writeView({ filters, page: next, sort, layout }, "push", "page");
+      writeView({ filters, page: next, sort }, "push", "page");
     },
-    [filters, sort, layout, writeView],
+    [filters, sort, writeView],
   );
 
   // Derived from the date fields rather than stored, so the two can't disagree.
