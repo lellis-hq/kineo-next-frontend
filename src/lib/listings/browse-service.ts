@@ -38,15 +38,29 @@ import type {
  */
 export const BROWSE_PAGE_SIZE = 10;
 
-/** The structured location filters, shared by all four browse reads. */
-function geoQuery(filters: BrowseFilters) {
-  return {
+type QueryValues = Parameters<typeof buildQuery>[0];
+
+/**
+ * The filter part of every browse read. One place to add a filter: with four
+ * near-identical queries, a new field used to reach only some of the reads.
+ * Callers override what their endpoint must not receive (e.g. facets drops
+ * the specialty) or add their own keys (page, id, limit) via `extra`.
+ */
+function browseQuery(filters: BrowseFilters, extra: QueryValues = {}): string {
+  return buildQuery({
+    specialty: filters.specialty,
+    city: filters.city,
     cityCode: filters.cityCode,
     department: filters.department,
     lat: filters.lat,
     lng: filters.lng,
     radiusKm: filters.radiusKm,
-  };
+    q: filters.q,
+    startDateFrom: filters.startDateFrom,
+    startDateTo: filters.startDateTo,
+    urgent: filters.urgentOnly ? "true" : undefined,
+    ...extra,
+  });
 }
 
 /**
@@ -61,14 +75,7 @@ export async function fetchBrowseListings(
   const page = filters.page ?? 1;
   const limit = filters.limit ?? BROWSE_PAGE_SIZE;
 
-  const query = buildQuery({
-    specialty: filters.specialty,
-    city: filters.city,
-    ...geoQuery(filters),
-    q: filters.q,
-    startDateFrom: filters.startDateFrom,
-    startDateTo: filters.startDateTo,
-    urgent: filters.urgentOnly ? "true" : undefined,
+  const query = browseQuery(filters, {
     sort: filters.sort,
     page,
     limit,
@@ -114,16 +121,7 @@ export async function fetchBrowsePlaces(
   transport?: ApiTransport,
   init?: RequestInit,
 ): Promise<BrowsePlacesData | null> {
-  const query = buildQuery({
-    specialty: filters.specialty,
-    city: filters.city,
-    ...geoQuery(filters),
-    q: filters.q,
-    startDateFrom: filters.startDateFrom,
-    startDateTo: filters.startDateTo,
-    urgent: filters.urgentOnly ? "true" : undefined,
-    sort: filters.sort,
-  });
+  const query = browseQuery(filters, { sort: filters.sort });
 
   try {
     const raw = await apiFetch<ApiListingPlaces>(
@@ -157,15 +155,8 @@ export async function fetchListingPageOf(
   transport?: ApiTransport,
   init?: RequestInit,
 ): Promise<ListingPageOfResult> {
-  const query = buildQuery({
+  const query = browseQuery(filters, {
     id,
-    specialty: filters.specialty,
-    city: filters.city,
-    ...geoQuery(filters),
-    q: filters.q,
-    startDateFrom: filters.startDateFrom,
-    startDateTo: filters.startDateTo,
-    urgent: filters.urgentOnly ? "true" : undefined,
     sort: filters.sort,
     limit: filters.limit ?? BROWSE_PAGE_SIZE,
   });
@@ -194,14 +185,9 @@ export async function fetchFacets(
   transport?: ApiTransport,
   init?: RequestInit,
 ): Promise<BrowseFacets> {
-  const query = buildQuery({
-    city: filters.city,
-    ...geoQuery(filters),
-    q: filters.q,
-    startDateFrom: filters.startDateFrom,
-    startDateTo: filters.startDateTo,
-    urgent: filters.urgentOnly ? "true" : undefined,
-  });
+  // The facets panel shows what else is on offer, so it never narrows by
+  // specialty; it has no page and no sort either.
+  const query = browseQuery(filters, { specialty: undefined });
 
   return apiFetch<ApiListingFacets>(
     `/replacement-listings/facets${query ? `?${query}` : ""}`,

@@ -3,6 +3,7 @@
  * first, then the browse feed.
  */
 
+export { type ActiveFilter, activeFilters } from "./active-filters";
 export type {
   FacetsRail,
   ListingDetailRail,
@@ -133,6 +134,7 @@ export {
   DEFAULT_BROWSE_VIEW,
   isDefaultBrowseView,
   narrowsCollection,
+  readLayout,
   toBrowseView,
 } from "./browse-url";
 export type { ListingSpotlight } from "./spotlight";

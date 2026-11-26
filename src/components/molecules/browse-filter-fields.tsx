@@ -3,7 +3,8 @@
 import { Chip } from "@/components/atoms/chip";
 import { CrosshairIcon } from "@/components/atoms/icons";
 import { Select } from "@/components/molecules/select";
-import { useDebouncedInput } from "@/lib/hooks/use-committed-input";
+import { useDebouncedInput } from "@/lib/hooks/use-debounced-input";
+import { useLocationFilters } from "@/lib/hooks/use-location-filters";
 import type { BrowseFormFilters } from "@/lib/listings";
 import type { Specialty } from "@/lib/types/api";
 
@@ -39,6 +40,10 @@ export function BrowseFilterFields({
     filters.to,
     (value) => onFiltersChange({ to: value }),
   );
+  const { locate, clearLocation } = useLocationFilters(
+    filters,
+    onFiltersChange,
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -68,26 +73,9 @@ export function BrowseFilterFields({
       <div className="flex flex-col gap-1.5">
         <span className="field-label">Recherche géographique</span>
         <div className="grid grid-cols-2 gap-2">
-          <Chip
-            size="sm"
-            className="justify-center"
-            onClick={() =>
-              navigator.geolocation?.getCurrentPosition(
-                (position) =>
-                  onFiltersChange({
-                    city: "",
-                    cityCode: "",
-                    department: "",
-                    lat: String(position.coords.latitude),
-                    lng: String(position.coords.longitude),
-                    radiusKm: filters.radiusKm || "10",
-                  }),
-                () => undefined,
-              )
-            }
-          >
+          <Chip size="sm" className="justify-center" onClick={locate}>
             <CrosshairIcon className="mr-1 inline-block size-3.5 align-[-0.15em]" />
-            Autour de moi
+            Me géolocaliser
           </Chip>
           <Select
             id="browse-radius"
@@ -106,10 +94,15 @@ export function BrowseFilterFields({
             ))}
           </Select>
         </div>
+        {!filters.lat && (
+          <p className="text-xs text-muted">
+            Géolocalisez-vous pour activer le rayon de recherche.
+          </p>
+        )}
         {filters.lat && (
           <button
             type="button"
-            onClick={() => onFiltersChange({ lat: "", lng: "", radiusKm: "" })}
+            onClick={clearLocation}
             className="text-xs font-medium text-primary hover:opacity-80"
           >
             Désactiver la recherche autour de moi

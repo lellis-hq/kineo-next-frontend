@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { shouldAdoptCommitted } from "./use-committed-input";
+import { shouldAdoptCommitted } from "./should-adopt-committed";
 
 describe("shouldAdoptCommitted", () => {
   it("ignores the echo of the field's own commit", () => {

@@ -8,6 +8,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { useLatest } from "@/lib/hooks/use-latest";
 import {
   type BrowseFormFilters,
   type BrowseLayout,
@@ -17,6 +18,7 @@ import {
   EMPTY_BROWSE_FILTERS,
   horizonForBounds,
   isDefaultBrowseView,
+  readLayout,
   toBrowseView,
 } from "@/lib/listings";
 import { SPECIALTY_LABELS } from "@/lib/profile";
@@ -39,7 +41,14 @@ export function useBrowseView() {
     [paramsKey],
   );
 
-  const [layout, setLayout] = useState<BrowseLayout>("split");
+  // The layout lives in the URL so a shared link opens the same split/map/list
+  // view. Local state keeps the switch responsive during the transition.
+  const [layout, setLayoutState] = useState<BrowseLayout>(() =>
+    readLayout(new URLSearchParams(paramsKey).get("view")),
+  );
+  // Read synchronously by writeView: a pick can change the layout and turn the
+  // page in the same tick, and both URL writes must carry the new layout.
+  const layoutRef = useLatest(layout);
   const [pendingWrite, setPendingWrite] = useState<"filters" | "page" | null>(
     null,
   );
@@ -47,6 +56,12 @@ export function useBrowseView() {
   useEffect(() => {
     if (!isNavigating) setPendingWrite(null);
   }, [isNavigating]);
+
+  useEffect(() => {
+    if (!isNavigating) {
+      setLayoutState(readLayout(new URLSearchParams(paramsKey).get("view")));
+    }
+  }, [paramsKey, isNavigating]);
 
   const view = useMemo(
     () => toBrowseView(filters, page, sort),
@@ -63,8 +78,15 @@ export function useBrowseView() {
       next: { filters: BrowseFormFilters; page: number; sort: BrowseSort },
       method: "replace" | "push",
       kind: "filters" | "page",
+      /** Carried explicitly by a pick that reveals the list. */
+      layoutOverride?: BrowseLayout,
     ) => {
-      const query = browseViewToParams(next.filters, next.page, next.sort);
+      const query = browseViewToParams(
+        next.filters,
+        next.page,
+        next.sort,
+        layoutOverride ?? layoutRef.current,
+      );
       const search = query.toString();
       const url = search ? `${pathname}?${search}` : pathname;
       setPendingWrite(kind);
@@ -75,6 +97,27 @@ export function useBrowseView() {
     },
     [pathname, router],
   );
+
+  /** A visual reflow: optimistic locally, but still shared through the URL. */
+  const setLayout = useCallback(
+    (next: BrowseLayout) => {
+      layoutRef.current = next;
+      setLayoutState(next);
+      const query = browseViewToParams(filters, page, sort, next).toString();
+      const url = query ? `${pathname}?${query}` : pathname;
+      startTransition(() => router.replace(url));
+    },
+    [filters, page, sort, pathname, router],
+  );
+
+  /**
+   * Optimistic part of a pick: the caller owns the single URL write (the page
+   * turn) and passes the new layout explicitly to `writeView`.
+   */
+  const revealSplit = useCallback(() => {
+    layoutRef.current = "split";
+    setLayoutState("split");
+  }, []);
 
   /** A filter change returns to the first page, in the same URL write. */
   const applyFilters = useCallback(
@@ -133,6 +176,7 @@ export function useBrowseView() {
     view,
     layout,
     setLayout,
+    revealSplit,
     isNavigating,
     pendingWrite,
     writeView,

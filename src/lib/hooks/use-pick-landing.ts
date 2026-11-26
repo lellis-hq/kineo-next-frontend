@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
+  BrowseLayout,
   BrowseSelection,
   ListingPageOfResult,
   ListingSpotlight,
@@ -40,7 +41,10 @@ export function usePickLanding({
   page: number;
   totalPages: number;
   onScreenIds: Set<string>;
-  turnToPage: (id: string) => Promise<ListingPageOfResult>;
+  turnToPage: (
+    id: string,
+    layoutOverride?: BrowseLayout,
+  ) => Promise<ListingPageOfResult>;
 }) {
   /** One-shot mark on the picked row, unlike the lasting selection. */
   const [spotlight, setSpotlight] = useState<ListingSpotlight | null>(null);
@@ -64,7 +68,7 @@ export function usePickLanding({
    * screen — the caller's cue to scroll now.
    */
   const landPick = useCallback(
-    (listing: MapPlaceListing): boolean => {
+    (listing: MapPlaceListing, layoutOverride?: BrowseLayout): boolean => {
       if (onScreenIds.has(listing.id)) {
         setSpotlight((current) => ({
           id: listing.id,
@@ -76,7 +80,7 @@ export function usePickLanding({
       }
 
       setPendingPick({ listing, fromPage: page });
-      turnToPage(listing.id).then((result) => {
+      turnToPage(listing.id, layoutOverride).then((result) => {
         if (result.status === "found") return;
         // A posting the filters no longer show vs. a failed lookup.
         setPendingPick(null);

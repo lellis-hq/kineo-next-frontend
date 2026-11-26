@@ -4,11 +4,11 @@ import { useState } from "react";
 import { Badge } from "@/components/atoms/badge";
 import { BackLink } from "@/components/molecules/back-link";
 import { EmptyState } from "@/components/molecules/empty-state";
-import { FilterChips } from "@/components/molecules/filter-chips";
 import { InlineAlert } from "@/components/molecules/inline-alert";
 import { Pagination } from "@/components/molecules/pagination";
 import { Panel } from "@/components/molecules/panel";
 import { ReceivedApplicationCard } from "@/components/molecules/received-application-card";
+import { SegmentedControl } from "@/components/molecules/segmented-control";
 import {
   type ListingAction,
   ListingActionButtons,
@@ -189,7 +189,8 @@ export function ListingDetailView({
             }
             action={
               // Rendered in every state: counters reading (0) explain an empty bucket.
-              <FilterChips
+              <SegmentedControl
+                className="w-fit"
                 ariaLabel="Filtrer les candidats par statut"
                 options={RECEIVED_FILTERS.map((option) => ({
                   ...option,

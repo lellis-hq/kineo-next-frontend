@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { shouldAdoptCommitted } from "@/lib/hooks/should-adopt-committed";
 import { useLatest } from "@/lib/hooks/use-latest";
 
 /**
  * A text field that applies its value after `delay` of quiet typing. Re-syncs
- * from the prop like `useCommittedInput`; `onCommit` is read through a ref so
- * a new identity doesn't restart the timer.
+ * from the prop, ignoring the echo of its own commit; `onCommit` is read
+ * through a ref so a new identity doesn't restart the timer.
  */
 export function useDebouncedInput(
   committed: string,
@@ -40,16 +41,4 @@ export function useDebouncedInput(
   }, [draft, delay]);
 
   return { draft, setDraft };
-}
-
-/**
- * Whether an arriving committed value should replace the draft. A value equal
- * to what this field last sent is the echo of its own commit, which lands after
- * navigation — the draft may already be newer.
- */
-export function shouldAdoptCommitted(
-  committed: string,
-  lastSent: string | null,
-): boolean {
-  return committed !== lastSent;
 }

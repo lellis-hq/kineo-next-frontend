@@ -79,6 +79,8 @@ export interface BrowseFilters {
   startDateTo?: string;
   urgentOnly?: boolean;
   sort?: BrowseSort;
+  /** Rows per page. The listing read accepts `limit`; omitted means default. */
+  limit?: number;
 }
 
 export interface BrowseView extends BrowseFilters {
@@ -111,6 +113,7 @@ export interface BrowseFormFilters {
   lat: string;
   lng: string;
   radiusKm: string;
+  limit: string;
   q: string;
   from: string;
   to: string;
@@ -125,6 +128,7 @@ export const EMPTY_BROWSE_FILTERS: BrowseFormFilters = {
   lat: "",
   lng: "",
   radiusKm: "",
+  limit: "10",
   q: "",
   from: "",
   to: "",
