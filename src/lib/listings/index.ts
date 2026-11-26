@@ -3,6 +3,7 @@
  * first, then the browse feed.
  */
 
+export { type ActiveFilter, activeFilters } from "./active-filters";
 export type {
   FacetsRail,
   ListingDetailRail,
