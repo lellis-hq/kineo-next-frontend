@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { ListingsView } from "@/components/templates/listings-view";
 import { useBrowsePicking } from "@/lib/hooks/use-browse-picking";
 import { useBrowseResource } from "@/lib/hooks/use-browse-resource";
@@ -14,9 +14,11 @@ import { useBrowseView } from "@/lib/hooks/use-browse-view";
 import {
   BROWSE_PAGE_SIZE,
   type BrowseFacets,
+  type BrowseFormFilters,
   type BrowseHorizon,
   type BrowseListingsData,
   type BrowsePlacesData,
+  type BrowseSort,
   horizonBounds,
   narrowsCollection,
   pagePoints,
@@ -79,24 +81,32 @@ export function ListingsContainer({
     mapRef: resource.mapRef,
   });
 
-  const onFiltersChange = browse.applyFilters;
-  const onSortChange = browse.applySort;
-  const onResetFilters = browse.resetFilters;
+  /** A view change that narrows or reorders the collection drops the choice. */
+  const dropChoice = useCallback(() => {
+    picking.setHoveredListingId(null);
+    picking.clearSelection();
+  }, [picking.clearSelection, picking.setHoveredListingId]);
 
-  // Keep the reader's pick across a filter or sort change when the posting is
-  // still in the new view; clear it only once the rows answer without it.
-  const selectedId = picking.selectedListing?.id;
-  useEffect(() => {
-    if (!selectedId || resource.loading) return;
-    if (!resource.data.listings.some((listing) => listing.id === selectedId)) {
-      picking.clearSelection();
-    }
-  }, [
-    selectedId,
-    resource.data.listings,
-    resource.loading,
-    picking.clearSelection,
-  ]);
+  const onFiltersChange = useCallback(
+    (patch: Partial<BrowseFormFilters>) => {
+      dropChoice();
+      browse.applyFilters(patch);
+    },
+    [browse.applyFilters, dropChoice],
+  );
+
+  const onSortChange = useCallback(
+    (next: BrowseSort) => {
+      dropChoice();
+      browse.applySort(next);
+    },
+    [browse.applySort, dropChoice],
+  );
+
+  const onResetFilters = useCallback(() => {
+    dropChoice();
+    browse.resetFilters();
+  }, [browse.resetFilters, dropChoice]);
 
   /** A page turn drops only the transient pick; the choice stays. */
   const onPageChange = useCallback(

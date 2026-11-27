@@ -95,7 +95,7 @@ export function useBrowsePicking({
       scrollTo(id);
       return fetchListingPageOf(id, {
         ...view,
-        limit: BROWSE_PAGE_SIZE,
+        limit: view.limit ?? BROWSE_PAGE_SIZE,
       })
         .then((result) => {
           if (result.status !== "found") {
