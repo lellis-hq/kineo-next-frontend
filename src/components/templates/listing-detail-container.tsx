@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { ListingDetailView } from "@/components/templates/listing-detail-view";
 import { ApiError } from "@/lib/api-client";
 import { errorMessage } from "@/lib/api-errors";
+import { readBrowseCache, writeBrowseCache } from "@/lib/browse-cache";
 import { useListingAction } from "@/lib/hooks/use-listing-action";
 import { usePaginatedResource } from "@/lib/hooks/use-paginated-resource";
+import { useViewUrl } from "@/lib/hooks/use-view-url";
 import {
   ACTION_SUCCESS,
   acceptReceivedApplication,
@@ -41,10 +43,14 @@ function statusForFilter(
   return RECEIVED_FILTERS.find((option) => option.id === filter)?.status;
 }
 
+function cacheKey(listingId: string, view: View): string {
+  return `received:${listingId}:${view.page}:${view.filter}`;
+}
+
 /**
  * Orchestrator for /listings/mine/[id]. The listing and the first page of
  * candidates arrive from the server; filtering, paging and re-reads are client
- * state.
+ * state kept in the URL.
  */
 export function ListingDetailContainer({
   listingId,
@@ -58,11 +64,23 @@ export function ListingDetailContainer({
   initialPhotos: ApiStoredFile[];
 }) {
   const [listing, setListing] = useState<MyListing>(initialListing);
-  const [page, setPage] = useState(1);
-  const [filter, setFilter] =
-    useState<ReceivedApplicationsFilter>(DEFAULT_FILTER);
 
-  const view = useMemo(() => ({ page, filter }), [page, filter]);
+  const readView = useCallback((params: URLSearchParams): View => {
+    const filter = params.get("filter") ?? DEFAULT_FILTER;
+    return {
+      page: Math.max(1, Number(params.get("page")) || 1),
+      filter: RECEIVED_FILTERS.some((option) => option.id === filter)
+        ? (filter as ReceivedApplicationsFilter)
+        : DEFAULT_FILTER,
+    };
+  }, []);
+
+  const writeView = useCallback((view: View, params: URLSearchParams) => {
+    if (view.page > 1) params.set("page", String(view.page));
+    if (view.filter !== DEFAULT_FILTER) params.set("filter", view.filter);
+  }, []);
+
+  const { view, setView } = useViewUrl({ read: readView, write: writeView });
 
   const load = useCallback(
     (target: View) =>
@@ -84,7 +102,24 @@ export function ListingDetailContainer({
     view,
     isDefaultView,
     load,
+    cacheKey: cacheKey(listingId, view),
   });
+
+  const prefetch = useCallback(
+    (page: number) => {
+      const target = { ...view, page };
+      const key = cacheKey(listingId, target);
+      if (readBrowseCache<ListingApplicationsData>(key)) return;
+      void fetchListingApplications(listingId, {
+        status: statusForFilter(target.filter),
+        page,
+        limit: LISTING_APPLICATIONS_PAGE_SIZE,
+      })
+        .then((fresh) => writeBrowseCache(key, fresh))
+        .catch(() => undefined);
+    },
+    [listingId, view],
+  );
 
   /**
    * Both halves are re-read rather than patched: the actions change statuses
@@ -93,10 +128,10 @@ export function ListingDetailContainer({
   const reread = useCallback(async () => {
     const [freshListing, freshReceived] = await Promise.all([
       fetchMyListing(listingId),
-      load({ page, filter }),
+      load(view),
     ]);
     return { freshListing, freshReceived };
-  }, [listingId, load, page, filter]);
+  }, [listingId, load, view]);
 
   const adopt = useCallback(
     ({ freshListing, freshReceived }: Awaited<ReturnType<typeof reread>>) => {
@@ -108,10 +143,7 @@ export function ListingDetailContainer({
 
   const action = useListingAction({ refresh: reread, onSettled: adopt });
 
-  /**
-   * After a decision on one application, re-read like the listing actions do.
-   * Refusals are rendered by the card that made the call.
-   */
+  /** After a decision, re-read like the listing actions do. */
   const refreshAfterDecision = useCallback(
     async () => adopt(await reread()),
     [adopt, reread],
@@ -140,7 +172,6 @@ export function ListingDetailContainer({
     [refreshAfterDecision],
   );
 
-  // The writes report their own refusals; this covers the re-reads.
   const readError =
     error === null
       ? undefined
@@ -153,13 +184,13 @@ export function ListingDetailContainer({
       listing={listing}
       photos={initialPhotos}
       received={received}
-      receivedFilter={filter}
+      receivedFilter={view.filter}
       onReceivedFilterChange={(next) => {
-        setFilter(next);
-        setPage(1);
+        setView({ ...view, filter: next, page: 1 });
         action.reset();
       }}
-      onPageChange={setPage}
+      onPageChange={(next) => setView({ ...view, page: next }, "push")}
+      onPrefetchPage={prefetch}
       loading={loading}
       acting={action.actingId === listingId}
       error={action.error?.message ?? readError}

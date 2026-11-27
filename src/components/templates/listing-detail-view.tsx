@@ -38,6 +38,7 @@ export interface ListingDetailViewProps {
   receivedFilter: ReceivedApplicationsFilter;
   onReceivedFilterChange: (filter: ReceivedApplicationsFilter) => void;
   onPageChange: (page: number) => void;
+  onPrefetchPage?: (page: number) => void;
   loading: boolean;
   acting: boolean;
   error?: string;
@@ -76,6 +77,7 @@ export function ListingDetailView({
   receivedFilter,
   onReceivedFilterChange,
   onPageChange,
+  onPrefetchPage,
   loading,
   acting,
   error,
@@ -260,6 +262,7 @@ export function ListingDetailView({
               currentPage={received.page}
               totalPages={received.totalPages}
               onPageChange={onPageChange}
+              onPrefetch={onPrefetchPage}
               className="mt-3 lg:mt-4"
             />
           </Panel>

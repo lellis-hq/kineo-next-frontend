@@ -34,6 +34,7 @@ export {
   APPLICATION_DECISION_CODES,
   applicationDecisionErrorMessage,
 } from "./application-decision-errors";
+export { DEFAULT_BROWSE_LIMIT } from "./browse-contracts";
 export type {
   ApplicationApplicant,
   ListingApplicationsData,

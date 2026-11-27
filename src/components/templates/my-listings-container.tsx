@@ -1,17 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { InlineRetryBanner } from "@/components/molecules/inline-retry-banner";
 import { MyListingsView } from "@/components/templates/my-listings-view";
+import { readBrowseCache, writeBrowseCache } from "@/lib/browse-cache";
 import { usePaginatedResource } from "@/lib/hooks/use-paginated-resource";
+import { useViewUrl } from "@/lib/hooks/use-view-url";
 import {
   fetchMyListings,
   LISTING_FILTERS,
   type ListingsFilter,
   type MyListingsData,
 } from "@/lib/listings";
-import { type MyListingsPageSize, rememberPageSize } from "@/lib/page-size";
-import type { ReplacementListingStatus } from "@/lib/types/api";
+import {
+  clampPageSize,
+  MY_LISTINGS_PAGE_SIZE_CHOICES,
+  type MyListingsPageSize,
+  readPageSize,
+  rememberPageSize,
+} from "@/lib/page-size";
 
 interface View {
   page: number;
@@ -39,8 +46,12 @@ function isDefaultView(
 }
 
 /** The backend statuses behind a chip; empty means « no filter ». */
-function statusesForFilter(filter: ListingsFilter): ReplacementListingStatus[] {
+function statusesForFilter(filter: ListingsFilter) {
   return LISTING_FILTERS.find((option) => option.id === filter)?.statuses ?? [];
+}
+
+function cacheKey(view: View): string {
+  return `my-listings:${view.page}:${view.filter}:${view.urgentOnly}:${view.pageSize}`;
 }
 
 function loadListings(target: View) {
@@ -54,7 +65,7 @@ function loadListings(target: View) {
 
 /**
  * Orchestrator for /listings/mine. The unfiltered first page arrives from the
- * server, so a cold load shows listings rather than a skeleton.
+ * server; every other view is client state kept in the URL.
  */
 export function MyListingsContainer({
   initialData,
@@ -63,15 +74,37 @@ export function MyListingsContainer({
   initialData: MyListingsData;
   initialPageSize: MyListingsPageSize;
 }) {
-  const [page, setPage] = useState(1);
-  const [filter, setFilter] = useState<ListingsFilter>(DEFAULT_FILTER);
-  const [urgentOnly, setUrgentOnly] = useState(false);
-  const [pageSize, setPageSize] = useState<MyListingsPageSize>(initialPageSize);
-
-  const view = useMemo(
-    () => ({ page, filter, urgentOnly, pageSize }),
-    [page, filter, urgentOnly, pageSize],
+  const readView = useCallback(
+    (params: URLSearchParams): View => {
+      const filter = params.get("filter") ?? DEFAULT_FILTER;
+      const rawSize = params.get("size");
+      return {
+        page: Math.max(1, Number(params.get("page")) || 1),
+        filter: LISTING_FILTERS.some((option) => option.id === filter)
+          ? (filter as ListingsFilter)
+          : DEFAULT_FILTER,
+        urgentOnly: params.get("urgent") === "true",
+        pageSize: rawSize
+          ? clampPageSize(readPageSize(rawSize), MY_LISTINGS_PAGE_SIZE_CHOICES)
+          : initialPageSize,
+      };
+    },
+    [initialPageSize],
   );
+
+  const writeView = useCallback(
+    (view: View, params: URLSearchParams) => {
+      if (view.page > 1) params.set("page", String(view.page));
+      if (view.filter !== DEFAULT_FILTER) params.set("filter", view.filter);
+      if (view.urgentOnly) params.set("urgent", "true");
+      if (view.pageSize !== initialPageSize) {
+        params.set("size", String(view.pageSize));
+      }
+    },
+    [initialPageSize],
+  );
+
+  const { view, setView } = useViewUrl({ read: readView, write: writeView });
 
   const { data, error, loading, reload } = usePaginatedResource<
     MyListingsData,
@@ -81,7 +114,20 @@ export function MyListingsContainer({
     view,
     isDefaultView: (target) => isDefaultView(target, initialPageSize),
     load: loadListings,
+    cacheKey: cacheKey(view),
   });
+
+  const prefetch = useCallback(
+    (page: number) => {
+      const target = { ...view, page };
+      const key = cacheKey(target);
+      if (readBrowseCache<MyListingsData>(key)) return;
+      void loadListings(target)
+        .then((fresh) => writeBrowseCache(key, fresh))
+        .catch(() => undefined);
+    },
+    [view],
+  );
 
   /**
    * Safety net: the backend already applies `urgent=true`. If it ever bites,
@@ -89,39 +135,34 @@ export function MyListingsContainer({
    */
   const visibleListings = useMemo(
     () =>
-      urgentOnly
+      view.urgentOnly
         ? data.listings.filter((listing) => listing.urgent)
         : data.listings,
-    [data.listings, urgentOnly],
+    [data.listings, view.urgentOnly],
   );
 
   return (
     <>
-      {/* Never fatal: the server always delivered the default bucket. */}
       {error !== null && (
         <InlineRetryBanner noun="Les annonces" onRetry={reload} error={error} />
       )}
       <MyListingsView
         listings={visibleListings}
         counts={data.counts}
-        currentFilter={filter}
-        onFilterChange={(next) => {
-          setFilter(next);
-          setPage(1);
-        }}
-        urgentOnly={urgentOnly}
-        onUrgentToggle={() => {
-          setUrgentOnly((current) => !current);
-          setPage(1);
-        }}
+        currentFilter={view.filter}
+        onFilterChange={(next) => setView({ ...view, filter: next, page: 1 })}
+        urgentOnly={view.urgentOnly}
+        onUrgentToggle={() =>
+          setView({ ...view, urgentOnly: !view.urgentOnly, page: 1 })
+        }
         page={data.page}
         totalPages={data.totalPages}
-        onPageChange={setPage}
-        pageSize={pageSize}
+        onPageChange={(next) => setView({ ...view, page: next }, "push")}
+        onPrefetchPage={prefetch}
+        pageSize={view.pageSize}
         onPageSizeChange={(next) => {
-          setPageSize(next);
-          setPage(1);
           rememberPageSize(next);
+          setView({ ...view, pageSize: next, page: 1 });
         }}
         loading={loading}
       />

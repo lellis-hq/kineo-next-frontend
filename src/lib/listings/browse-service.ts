@@ -31,12 +31,13 @@ import type {
   BrowseListingsData,
   BrowsePlacesData,
 } from "./browse-contracts";
+import { DEFAULT_BROWSE_LIMIT } from "./browse-contracts";
 
 /**
  * Rows per page, server render and client refetch alike — they must agree, or
  * a filter change lands the reader on a page that does not exist.
  */
-export const BROWSE_PAGE_SIZE = 10;
+export const BROWSE_PAGE_SIZE = DEFAULT_BROWSE_LIMIT;
 
 type QueryValues = Parameters<typeof buildQuery>[0];
 
@@ -46,7 +47,10 @@ type QueryValues = Parameters<typeof buildQuery>[0];
  * Callers override what their endpoint must not receive (e.g. facets drops
  * the specialty) or add their own keys (page, id, limit) via `extra`.
  */
-function browseQuery(filters: BrowseFilters, extra: QueryValues = {}): string {
+export function browseQuery(
+  filters: BrowseFilters,
+  extra: QueryValues = {},
+): string {
   return buildQuery({
     specialty: filters.specialty,
     city: filters.city,

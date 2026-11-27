@@ -8,6 +8,9 @@
 import type { MapPlace, MapPlaceListing, MapPoint } from "@/lib/map/types";
 import type { ReplacementListingStatus, Specialty } from "@/lib/types/api";
 
+/** The page size the server seeds and the URL omits. */
+export const DEFAULT_BROWSE_LIMIT = 10;
+
 export interface ListingLocation {
   latitude: number;
   longitude: number;

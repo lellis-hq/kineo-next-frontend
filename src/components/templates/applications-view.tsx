@@ -25,6 +25,7 @@ import {
 interface ApplicationsViewProps {
   data: ApplicationsData;
   onPageChange: (page: number) => void;
+  onPrefetchPage?: (page: number) => void;
   onFilterChange: (filter: ApplicationsFilter) => void;
   currentFilter: ApplicationsFilter;
   currentSituation: RejectionSituationFilter;
@@ -41,6 +42,7 @@ interface ApplicationsViewProps {
 export function ApplicationsView({
   data,
   onPageChange,
+  onPrefetchPage,
   onFilterChange,
   currentFilter,
   currentSituation,
@@ -137,6 +139,7 @@ export function ApplicationsView({
               currentPage={data.pagination.page}
               totalPages={data.pagination.totalPages}
               onPageChange={onPageChange}
+              onPrefetch={onPrefetchPage}
               pageSize={pageSize}
               onPageSizeChange={onPageSizeChange}
               choices={APPLICATIONS_PAGE_SIZE_CHOICES}

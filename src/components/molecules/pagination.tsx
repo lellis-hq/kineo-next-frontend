@@ -9,6 +9,8 @@ interface PaginationProps<C extends PageSize = PageSize> {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  /** Warm the cache when a reader hovers a pager arrow. */
+  onPrefetch?: (page: number) => void;
   /**
    * A page turn is in flight: disables the arrows, so clicking faster than the
    * network answers can't send a burst the backend rate-limits.
@@ -35,6 +37,7 @@ export function Pagination<C extends PageSize = PageSize>({
   currentPage,
   totalPages,
   onPageChange,
+  onPrefetch,
   loading = false,
   highlight,
   pageSize,
@@ -68,6 +71,8 @@ export function Pagination<C extends PageSize = PageSize>({
             type="button"
             disabled={!hasPrevious || loading}
             onClick={() => onPageChange(currentPage - 1)}
+            onMouseEnter={() => onPrefetch?.(currentPage - 1)}
+            onFocus={() => onPrefetch?.(currentPage - 1)}
             aria-label="Page précédente"
             className={TRACK_PILL}
           >
@@ -89,6 +94,8 @@ export function Pagination<C extends PageSize = PageSize>({
             type="button"
             disabled={!hasNext || loading}
             onClick={() => onPageChange(currentPage + 1)}
+            onMouseEnter={() => onPrefetch?.(currentPage + 1)}
+            onFocus={() => onPrefetch?.(currentPage + 1)}
             aria-label="Page suivante"
             className={TRACK_PILL}
           >

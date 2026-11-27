@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { readBrowseCache, writeBrowseCache } from "@/lib/browse-cache";
 import { signInOnExpiredSession } from "@/lib/session-redirect";
 import { useRaceGuard } from "./use-race-guard";
 
@@ -20,6 +21,7 @@ export function usePaginatedResource<T, V>({
   onLoaded,
   onRestored,
   seedFromServer,
+  cacheKey,
 }: {
   /** The server's answer for the default view. */
   initialData: T;
@@ -35,6 +37,8 @@ export function usePaginatedResource<T, V>({
    * client-side.
    */
   seedFromServer?: boolean;
+  /** Reuse a recently visited view instead of refetching it. */
+  cacheKey?: string;
 }) {
   const router = useRouter();
   const [data, setData] = useState(initialData);
@@ -56,7 +60,17 @@ export function usePaginatedResource<T, V>({
   useEffect(() => revoke, [revoke]);
 
   const fetchView = useCallback(
-    (target: V) => {
+    (target: V, force = false) => {
+      if (!force && cacheKey) {
+        const cached = readBrowseCache<T>(cacheKey);
+        if (cached !== undefined) {
+          setData(cached);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+      }
+
       const { controller, mine } = start();
 
       setError(null);
@@ -66,6 +80,7 @@ export function usePaginatedResource<T, V>({
         .then((loaded) => {
           if (isStale(mine)) return;
           settled();
+          if (cacheKey) writeBrowseCache(cacheKey, loaded);
           setData(loaded);
           setLoading(false);
           afterLoad.current?.();
@@ -80,7 +95,7 @@ export function usePaginatedResource<T, V>({
           setError(err);
         });
     },
-    [start, isStale, settled, load, router],
+    [start, isStale, settled, load, router, cacheKey],
   );
 
   const restore = useCallback(() => {
@@ -122,18 +137,19 @@ export function usePaginatedResource<T, V>({
       restore();
       return;
     }
-    fetchView(view);
+    fetchView(view, true);
   }, [view, fetchView, restore]);
 
   /** Adopts rows a mutation already refetched, without a second request. */
   const replace = useCallback(
     (fresh: T) => {
       revoke();
+      if (cacheKey) writeBrowseCache(cacheKey, fresh);
       setData(fresh);
       setError(null);
       setLoading(false);
     },
-    [revoke],
+    [revoke, cacheKey],
   );
 
   return { data, error, loading, reload, replace };

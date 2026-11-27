@@ -35,6 +35,7 @@ export interface MyListingsViewProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  onPrefetchPage?: (page: number) => void;
   pageSize: MyListingsPageSize;
   onPageSizeChange: (size: MyListingsPageSize) => void;
   loading: boolean;
@@ -55,6 +56,7 @@ export function MyListingsView({
   page,
   totalPages,
   onPageChange,
+  onPrefetchPage,
   pageSize,
   onPageSizeChange,
   loading,
@@ -136,6 +138,7 @@ export function MyListingsView({
           currentPage={page}
           totalPages={totalPages}
           onPageChange={onPageChange}
+          onPrefetch={onPrefetchPage}
           pageSize={pageSize}
           onPageSizeChange={onPageSizeChange}
           choices={MY_LISTINGS_PAGE_SIZE_CHOICES}

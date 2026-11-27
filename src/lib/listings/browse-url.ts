@@ -13,6 +13,7 @@ import type {
   BrowseSort,
   BrowseView,
 } from "./browse-contracts";
+import { DEFAULT_BROWSE_LIMIT } from "./browse-contracts";
 
 /** The view the server renders on arrival: no filter, first page, newest first. */
 export const DEFAULT_BROWSE_VIEW = { page: 1, sort: "recent" } as const;
@@ -80,6 +81,7 @@ export function isDefaultBrowseView(view: BrowseView): boolean {
   return (
     view.page === DEFAULT_BROWSE_VIEW.page &&
     view.sort === DEFAULT_BROWSE_VIEW.sort &&
+    (view.limit ?? DEFAULT_BROWSE_LIMIT) === DEFAULT_BROWSE_LIMIT &&
     !narrowsCollection(view)
   );
 }
@@ -163,7 +165,7 @@ export function browseViewFromParams(params: Pick<URLSearchParams, "get">): {
       lat: params.get("lat") ?? "",
       lng: params.get("lng") ?? "",
       radiusKm: params.get("radiusKm") ?? "",
-      limit: String(readPageSize(params.get("limit")) ?? 10),
+      limit: String(readPageSize(params.get("limit")) ?? DEFAULT_BROWSE_LIMIT),
       q: (params.get("q") ?? "").trim(),
       from: readDate(params.get("from") ?? ""),
       to: readDate(params.get("to") ?? ""),
@@ -216,7 +218,9 @@ export function browseViewToParams(
   const q = filters.q.trim();
   if (q) params.set("q", q);
   const size = readPageSize(filters.limit);
-  if (size !== undefined && size !== 10) params.set("limit", String(size));
+  if (size !== undefined && size !== DEFAULT_BROWSE_LIMIT) {
+    params.set("limit", String(size));
+  }
   if (layout !== "split") params.set("view", layout);
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);

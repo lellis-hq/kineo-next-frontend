@@ -9,6 +9,7 @@ import {
   isDefaultBrowseView,
   type ListingsTableHandle,
 } from "@/lib/listings";
+import { browseRowsKey } from "@/lib/listings/browse-cache";
 import { usePaginatedResource } from "./use-paginated-resource";
 import { useScrollToRow } from "./use-scroll-to-row";
 
@@ -32,7 +33,7 @@ export function useBrowseResource(
     view,
     isDefaultView: isDefaultBrowseView,
     load,
-    seedFromServer: true,
+    cacheKey: browseRowsKey(view),
   });
 
   const tableRef = useRef<ListingsTableHandle>(null);

@@ -24,7 +24,6 @@ import {
 type WriteView = (
   next: { filters: BrowseFormFilters; page: number; sort: BrowseSort },
   method: "replace" | "push",
-  kind: "filters" | "page",
   layoutOverride?: BrowseLayout,
 ) => void;
 
@@ -96,7 +95,7 @@ export function useBrowsePicking({
       scrollTo(id);
       return fetchListingPageOf(id, {
         ...view,
-        limit: BROWSE_PAGE_SIZE,
+        limit: view.limit ?? BROWSE_PAGE_SIZE,
       })
         .then((result) => {
           if (result.status !== "found") {
@@ -106,7 +105,6 @@ export function useBrowsePicking({
           writeView(
             { filters, page: result.page, sort },
             "replace",
-            "page",
             layoutOverride,
           );
           return result;
