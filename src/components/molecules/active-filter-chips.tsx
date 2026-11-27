@@ -23,6 +23,7 @@ export function ActiveFilterChips({
         <Chip
           key={chip.key}
           size="sm"
+          className="row-enter"
           aria-label={`Retirer le filtre ${chip.label}`}
           onClick={() => onFiltersChange(chip.clear)}
         >

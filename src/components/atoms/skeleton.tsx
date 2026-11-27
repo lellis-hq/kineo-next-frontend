@@ -9,7 +9,7 @@ const SHAPES: Record<SkeletonShape, string> = {
   full: "rounded-full",
 };
 
-/** A pulsing placeholder; size and background come from the caller. */
+/** A quiet shimmering placeholder; size comes from the caller. */
 export function Skeleton({
   shape = "control",
   className,
@@ -18,7 +18,7 @@ export function Skeleton({
   return (
     <div
       aria-hidden="true"
-      className={cn("animate-pulse bg-surface", SHAPES[shape], className)}
+      className={cn("skeleton-shimmer bg-surface", SHAPES[shape], className)}
       {...rest}
     />
   );

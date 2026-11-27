@@ -61,7 +61,7 @@ export function SegmentedControl<T extends string>({
             title={Icon ? option.label : undefined}
             onClick={() => onChange(option.id)}
             className={cn(
-              "shrink-0 rounded-full transition-colors",
+              "shrink-0 rounded-full transition-colors active:translate-y-px",
               Icon
                 ? "grid size-8 cursor-pointer place-items-center"
                 : "px-4 py-1.5 text-control font-medium whitespace-nowrap",
