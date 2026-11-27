@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { readBrowseCache, writeBrowseCache } from "@/lib/browse-cache";
 import type {
   BrowseFacets,
   BrowsePlacesData,
@@ -26,6 +27,12 @@ export function useBrowseFacets(initial: BrowseFacets, view: BrowseView) {
 
   useEffect(() => {
     guard.revoke();
+    const cached = readBrowseCache<BrowseFacets>(`facets:${key}`);
+    if (cached !== undefined) {
+      setFacets(cached);
+      setLoading(false);
+      return;
+    }
     if (key === seededKey.current) {
       setFacets(initial);
       setLoading(false);
@@ -38,6 +45,7 @@ export function useBrowseFacets(initial: BrowseFacets, view: BrowseView) {
       .then((loaded) => {
         if (guard.isStale(mine)) return;
         guard.settled();
+        writeBrowseCache(`facets:${key}`, loaded);
         setFacets(loaded);
         setLoading(false);
       })
@@ -72,6 +80,12 @@ export function useBrowsePlaces(
       setLoading(false);
       return;
     }
+    const cached = readBrowseCache<BrowsePlacesData>(`places:${key}`);
+    if (cached !== undefined) {
+      setPlaces(cached);
+      setLoading(false);
+      return;
+    }
     // A list-only first render has no seeded places: fetch them when the map
     // appears, even though the filter key itself has not changed.
     if (key === seededKey.current && initial !== null) {
@@ -86,7 +100,10 @@ export function useBrowsePlaces(
       .then((loaded) => {
         if (guard.isStale(mine)) return;
         guard.settled();
-        if (loaded !== null) setPlaces(loaded);
+        if (loaded !== null) {
+          writeBrowseCache(`places:${key}`, loaded);
+          setPlaces(loaded);
+        }
         setLoading(false);
       })
       .catch(() => {

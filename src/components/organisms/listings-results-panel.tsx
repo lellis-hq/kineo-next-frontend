@@ -47,6 +47,7 @@ interface ListingsResultsPanelProps {
   totalPages: number;
   page: number;
   onPageChange: (page: number) => void;
+  onPrefetchPage?: (page: number) => void;
   pageSize?: number;
   onPageSizeChange?: (size: number) => void;
   filters: BrowseFormFilters;
@@ -77,6 +78,7 @@ export function ListingsResultsPanel({
   totalPages,
   page,
   onPageChange,
+  onPrefetchPage,
   pageSize,
   onPageSizeChange,
   filters,
@@ -208,6 +210,7 @@ export function ListingsResultsPanel({
         currentPage={page}
         totalPages={totalPages}
         onPageChange={onPageChange}
+        onPrefetch={onPrefetchPage}
         pageSize={pageSize as PageSize | undefined}
         onPageSizeChange={onPageSizeChange}
         loading={loading}
