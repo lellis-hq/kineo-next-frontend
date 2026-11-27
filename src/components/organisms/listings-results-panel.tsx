@@ -99,7 +99,7 @@ export function ListingsResultsPanel({
   return (
     <Panel
       fill
-      className="lg:flex-[5]"
+      className="relative lg:flex-[5]"
       title={
         <>
           Annonces <span className="text-muted tabular-nums">{total}</span>
@@ -131,6 +131,7 @@ export function ListingsResultsPanel({
         </div>
       }
     >
+      {loading && <div className="browse-progress" aria-hidden="true" />}
       <ActiveFilterChips
         filters={filters}
         onFiltersChange={onFiltersChange}

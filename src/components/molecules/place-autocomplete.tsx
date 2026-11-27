@@ -109,7 +109,7 @@ export function PlaceAutocomplete({
           id={listId}
           role="listbox"
           aria-label={label}
-          className="absolute top-full left-0 z-50 mt-1 max-h-72 w-full min-w-64 overflow-y-auto rounded-control border border-border bg-surface-2 py-1 shadow-lg"
+          className="combobox-popup absolute top-full left-0 z-50 mt-1 max-h-72 w-full min-w-64 overflow-y-auto rounded-control border border-border bg-surface-2 py-1 shadow-lg"
         >
           {status === "loading" && options.length === 0 && (
             <p className="px-3 py-2 text-sm text-muted">Recherche…</p>

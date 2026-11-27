@@ -39,7 +39,7 @@ export function SelectPill<Value extends string>({
   return (
     <label
       className={cn(
-        "flex shrink-0 cursor-pointer items-center rounded-full border border-border py-1.5 pr-1.5 pl-3.5 transition-colors hover:border-border-strong has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-ring",
+        "flex shrink-0 cursor-pointer items-center rounded-full border border-border py-1.5 pr-1.5 pl-3.5 transition-colors hover:border-border-strong active:translate-y-px has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-ring",
         overlay && MAP_PILL,
         disabled && "pointer-events-none opacity-50",
         className,
