@@ -32,7 +32,6 @@ export function useBrowseResource(
     view,
     isDefaultView: isDefaultBrowseView,
     load,
-    seedFromServer: true,
   });
 
   const tableRef = useRef<ListingsTableHandle>(null);

@@ -24,12 +24,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * The member-only feed, resolved on the server. The URL is the source of
- * truth: all three reads are seeded from it, and the client never refetches.
- *
- * The rows and facets are awaited; the map's places stay a promise, unwrapped
- * behind a `<Suspense>` in the container, so the slowest read can't hold up
- * the list.
+ * The member-only feed. The server only seeds the first render; from there the
+ * URL is written with the native History API and the client fetches the new
+ * view. The heavy `/places` read is skipped entirely in « Liste seule ».
  */
 export default function ListingsPage({
   searchParams,
@@ -58,7 +55,8 @@ async function Listings({
   const { filters, page, sort } = browseViewFromParams(params);
   const view = toBrowseView(filters, page, sort);
 
-  const [data, facets, home] = await requireMember(
+  const showMap = readLayout(params.get("view")) !== "list";
+  const [data, facets, home, places] = await requireMember(
     Promise.all([
       fetchBrowseListings(view, serverTransport),
       fetchFacets(view, serverTransport),
@@ -71,6 +69,9 @@ async function Listings({
             : null,
         () => null,
       ),
+      showMap
+        ? fetchBrowsePlaces(view, serverTransport).catch(() => null)
+        : Promise.resolve(null),
     ]),
   );
 
@@ -81,8 +82,6 @@ async function Listings({
       `/listings?${browseViewToParams(filters, clampedPage, sort, readLayout(params.get("view"))).toString()}`,
     );
   }
-
-  const places = fetchBrowsePlaces(view, serverTransport).catch(() => null);
 
   // A failed places read starts the map empty rather than failing the page.
   return (

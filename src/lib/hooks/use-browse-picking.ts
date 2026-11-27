@@ -24,7 +24,6 @@ import {
 type WriteView = (
   next: { filters: BrowseFormFilters; page: number; sort: BrowseSort },
   method: "replace" | "push",
-  kind: "filters" | "page",
   layoutOverride?: BrowseLayout,
 ) => void;
 
@@ -106,7 +105,6 @@ export function useBrowsePicking({
           writeView(
             { filters, page: result.page, sort },
             "replace",
-            "page",
             layoutOverride,
           );
           return result;

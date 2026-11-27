@@ -176,6 +176,11 @@ describe("isDefaultBrowseView", () => {
     expect(isDefaultBrowseView(toBrowseView(EMPTY_BROWSE_FILTERS, 2))).toBe(
       false,
     );
+    expect(
+      isDefaultBrowseView(
+        toBrowseView({ ...EMPTY_BROWSE_FILTERS, limit: "20" }),
+      ),
+    ).toBe(false);
   });
 
   /**

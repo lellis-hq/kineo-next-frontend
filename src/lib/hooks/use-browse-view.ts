@@ -1,13 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLatest } from "@/lib/hooks/use-latest";
 import {
   type BrowseFormFilters,
@@ -30,10 +24,8 @@ import type { Specialty } from "@/lib/types/api";
  * The layout stays client state: a visual reflow isn't worth a round trip.
  */
 export function useBrowseView() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isNavigating, startTransition] = useTransition();
 
   const paramsKey = searchParams.toString();
   const { filters, page, sort } = useMemo(
@@ -49,19 +41,9 @@ export function useBrowseView() {
   // Read synchronously by writeView: a pick can change the layout and turn the
   // page in the same tick, and both URL writes must carry the new layout.
   const layoutRef = useLatest(layout);
-  const [pendingWrite, setPendingWrite] = useState<"filters" | "page" | null>(
-    null,
-  );
-
   useEffect(() => {
-    if (!isNavigating) setPendingWrite(null);
-  }, [isNavigating]);
-
-  useEffect(() => {
-    if (!isNavigating) {
-      setLayoutState(readLayout(new URLSearchParams(paramsKey).get("view")));
-    }
-  }, [paramsKey, isNavigating]);
+    setLayoutState(readLayout(new URLSearchParams(paramsKey).get("view")));
+  }, [paramsKey]);
 
   const view = useMemo(
     () => toBrowseView(filters, page, sort),
@@ -77,7 +59,6 @@ export function useBrowseView() {
     (
       next: { filters: BrowseFormFilters; page: number; sort: BrowseSort },
       method: "replace" | "push",
-      kind: "filters" | "page",
       /** Carried explicitly by a pick that reveals the list. */
       layoutOverride?: BrowseLayout,
     ) => {
@@ -89,13 +70,12 @@ export function useBrowseView() {
       );
       const search = query.toString();
       const url = search ? `${pathname}?${search}` : pathname;
-      setPendingWrite(kind);
-      startTransition(() => {
-        if (method === "push") router.push(url);
-        else router.replace(url);
-      });
+      // Native history updates useSearchParams without re-rendering the server
+      // page: the client fetches the new view instead of re-seeding it.
+      if (method === "push") window.history.pushState(null, "", url);
+      else window.history.replaceState(null, "", url);
     },
-    [pathname, router],
+    [pathname],
   );
 
   /** A visual reflow: optimistic locally, but still shared through the URL. */
@@ -105,9 +85,9 @@ export function useBrowseView() {
       setLayoutState(next);
       const query = browseViewToParams(filters, page, sort, next).toString();
       const url = query ? `${pathname}?${query}` : pathname;
-      startTransition(() => router.replace(url));
+      window.history.replaceState(null, "", url);
     },
-    [filters, page, sort, pathname, router],
+    [filters, page, sort, pathname],
   );
 
   /**
@@ -125,7 +105,6 @@ export function useBrowseView() {
       writeView(
         { filters: { ...filters, ...patch }, page: 1, sort },
         "replace",
-        "filters",
       );
     },
     [filters, sort, writeView],
@@ -133,23 +112,19 @@ export function useBrowseView() {
 
   const applySort = useCallback(
     (next: BrowseSort) => {
-      writeView({ filters, page: 1, sort: next }, "replace", "filters");
+      writeView({ filters, page: 1, sort: next }, "replace");
     },
     [filters, writeView],
   );
 
   const resetFilters = useCallback(() => {
-    writeView(
-      { filters: EMPTY_BROWSE_FILTERS, page: 1, sort },
-      "replace",
-      "filters",
-    );
+    writeView({ filters: EMPTY_BROWSE_FILTERS, page: 1, sort }, "replace");
   }, [sort, writeView]);
 
   /** A `push`, so the back button walks the pages. */
   const changePage = useCallback(
     (next: number) => {
-      writeView({ filters, page: next, sort }, "push", "page");
+      writeView({ filters, page: next, sort }, "push");
     },
     [filters, sort, writeView],
   );
@@ -177,8 +152,6 @@ export function useBrowseView() {
     layout,
     setLayout,
     revealSplit,
-    isNavigating,
-    pendingWrite,
     writeView,
     applyFilters,
     applySort,
